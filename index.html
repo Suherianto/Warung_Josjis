@@ -1,0 +1,3825 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Warung Josjis - Simulasi Bisnis & Literasi Keuangan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-display: 'Fredoka', cursive, sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-body);
+      background-color: #1e293b;
+      color: #1e293b;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .font-rpg {
+      font-family: var(--font-display);
+    }
+
+    .btn-rpg {
+      position: relative;
+      transition: all 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border-bottom-width: 4px;
+      cursor: pointer;
+    }
+    .btn-rpg:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+    }
+    .btn-rpg:active:not(:disabled) {
+      transform: translateY(2px);
+      border-bottom-width: 1px;
+    }
+    .btn-rpg:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(0.4);
+    }
+
+    #game-container {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #4d7c0f;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .rpg-scroll::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .rpg-scroll::-webkit-scrollbar-track {
+      background: #fef3c7;
+      border-radius: 999px;
+    }
+    .rpg-scroll::-webkit-scrollbar-thumb {
+      background: #d97706;
+      border-radius: 999px;
+    }
+
+    @keyframes modalPop {
+      0% { transform: scale(0.92) translateY(10px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .animate-modal {
+      animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes pulseBadge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+    }
+    .animate-badge {
+      animation: pulseBadge 1.5s infinite;
+    }
+
+    .hud-draggable {
+      touch-action: none;
+      transition: box-shadow 0.15s ease;
+    }
+    .hud-edit-active {
+      outline: 3px dashed #facc15;
+      outline-offset: 4px;
+      cursor: grab !important;
+      background-color: rgba(250, 204, 21, 0.2);
+      border-radius: 9999px;
+    }
+    .hud-edit-active:active {
+      cursor: grabbing !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 select-none">
+
+  <!-- ===================================================================== -->
+  <!-- LAYAR AWAL PERMAINAN (MAIN MENU: MULAI, MENU, KELUAR)                 -->
+  <!-- ===================================================================== -->
+  <div id="main-menu-screen" class="fixed inset-0 z-50 bg-gradient-to-b from-sky-900 via-amber-900 to-slate-950 flex flex-col items-center justify-center p-4 text-center">
+    <div class="animate-modal max-w-md w-full bg-amber-50/95 border-4 border-amber-700 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+      <div class="space-y-2">
+        <div class="inline-block bg-amber-200 border-2 border-amber-500 text-amber-950 text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-full">
+          Simulasi Bisnis & Literasi Keuangan Pelajar
+        </div>
+        <div class="text-5xl">🏪🪙</div>
+        <h1 class="font-rpg text-3xl sm:text-4xl font-bold text-amber-950 leading-tight">
+          Warung Josjis
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-600 font-medium">
+          Kisah Bima merintis toko kelontong pertamanya dari tabungan Rp 30 Juta!
+        </p>
+      </div>
+
+      <div class="space-y-3 pt-1">
+        <button onclick="handleStartButtonClick()" class="btn-rpg w-full bg-emerald-500 border-emerald-700 text-white font-rpg font-bold py-3.5 rounded-2xl text-lg shadow-lg flex items-center justify-center gap-2">
+          <span>▶</span>
+          <span>Mulai</span>
+        </button>
+
+        <button onclick="openSettingsMenu(true)" class="btn-rpg w-full bg-amber-400 border-amber-600 text-amber-950 font-rpg font-bold py-3.5 rounded-2xl text-lg shadow-lg flex items-center justify-center gap-2">
+          <span>⚙️</span>
+          <span>Menu</span>
+        </button>
+
+        <button onclick="handleExitGame()" class="btn-rpg w-full bg-rose-500 border-rose-700 text-white font-rpg font-bold py-3.5 rounded-2xl text-lg shadow-lg flex items-center justify-center gap-2">
+          <span>🚪</span>
+          <span>Keluar</span>
+        </button>
+      </div>
+
+      <div class="text-[11px] text-slate-500 font-semibold">
+        Gunakan Analog / WASD untuk bergerak • Lari untuk mempercepat langkah Bima
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- LAYAR KELUAR GAME                                                     -->
+  <!-- ===================================================================== -->
+  <div id="exit-game-screen" class="hidden fixed inset-0 z-[60] bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
+    <div class="max-w-md space-y-4">
+      <div class="text-5xl">👋🏪</div>
+      <h2 class="font-rpg text-2xl sm:text-3xl font-bold text-amber-300">Terima Kasih Telah Bermain!</h2>
+      <p class="text-sm text-slate-300 leading-relaxed">
+        Kamu telah keluar dari <b>Warung Josjis</b>. Jangan lupa terapkan ilmu memisahkan modal usaha, biaya sewa, perlengkapan, dan tabungan di dunia nyata!
+      </p>
+      <div class="pt-3">
+        <button onclick="returnToMainMenu()" class="btn-rpg bg-emerald-500 border-emerald-700 text-white font-rpg font-bold px-6 py-3 rounded-2xl text-sm">
+          🔄 Kembali ke Layar Utama
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL MENU PENGATURAN (VOLUME & KUSTOM HUD)                           -->
+  <!-- ===================================================================== -->
+  <div id="modal-settings" class="hidden fixed inset-0 z-[55] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="animate-modal bg-amber-50 border-4 border-amber-700 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+      <div class="bg-amber-500 text-amber-950 px-5 py-3 flex items-center justify-between border-b-4 border-amber-700">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">⚙️</span>
+          <h2 class="font-rpg text-lg font-bold">Menu Pengaturan</h2>
+        </div>
+        <button onclick="closeSettingsMenu()" class="bg-amber-800 text-white rounded-xl px-3 py-1 text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-5 space-y-5">
+        <div class="bg-white border-2 border-amber-200 rounded-2xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="font-rpg font-bold text-slate-800 text-base">🔊 Volume Audio & Musik</span>
+            <span id="settings-volume-label" class="font-rpg font-bold text-emerald-700 text-sm">80%</span>
+          </div>
+          <input
+            id="settings-volume-slider"
+            type="range"
+            min="0"
+            max="100"
+            value="80"
+            oninput="updateMasterVolume(this.value)"
+            class="w-full accent-emerald-600 cursor-pointer h-2.5 bg-amber-200 rounded-lg"
+          />
+          <p class="text-[11px] text-slate-500">Geser ke 0% untuk membisukan efek suara koin, pintu, dan musik latar.</p>
+        </div>
+
+        <div class="bg-white border-2 border-indigo-200 rounded-2xl p-4 space-y-3">
+          <div>
+            <h3 class="font-rpg font-bold text-indigo-950 text-base">🎮 Kustom Tata Letak HUD</h3>
+            <p class="text-xs text-slate-600 mt-0.5">
+              Atur posisi <b>Tombol Analog</b>, <b>Tombol Interaksi</b>, dan <b>Tombol Lari</b> sesuai kenyamanan jarimu di layar.
+            </p>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <button onclick="enterHudCustomizeMode()" class="btn-rpg flex-1 bg-indigo-600 border-indigo-800 text-white font-rpg font-bold py-2.5 px-3 rounded-xl text-xs sm:text-sm">
+              ✋ Atur Tata Letak Tombol
+            </button>
+            <button onclick="resetCustomHudLayout()" class="btn-rpg bg-slate-200 border-slate-400 text-slate-800 font-rpg font-bold py-2.5 px-3 rounded-xl text-xs">
+              ↺ Reset Default
+            </button>
+          </div>
+        </div>
+
+        <button onclick="closeSettingsMenu()" class="btn-rpg w-full bg-emerald-500 border-emerald-700 text-white font-rpg font-bold py-2.5 rounded-2xl text-sm">
+          Simpan & Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner Mode Edit Kustom HUD -->
+  <div id="hud-customize-bar" class="hidden fixed top-3 left-1/2 -translate-x-1/2 z-[58] bg-slate-900/95 text-white border-2 border-yellow-400 rounded-2xl px-4 py-2.5 shadow-2xl flex items-center gap-3">
+    <span class="text-xs sm:text-sm font-bold text-yellow-300">✋ Seret Tombol Analog, Interaksi, atau Lari untuk memindahkannya!</span>
+    <button onclick="exitHudCustomizeMode()" class="btn-rpg bg-emerald-500 border-emerald-700 text-white font-rpg font-bold px-3.5 py-1.5 rounded-xl text-xs whitespace-nowrap">
+      ✅ Selesai
+    </button>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL PEMERIKSAAN TABUNGAN RP 30 JUTA & RENCANA MODAL AWAL BIMA       -->
+  <!-- ===================================================================== -->
+  <div id="modal-initial-budget" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="animate-modal bg-amber-50 border-4 border-emerald-700 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl">
+      <div class="bg-emerald-600 text-white px-5 py-3.5 border-b-4 border-emerald-800 flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-white border-2 border-emerald-900 overflow-hidden shrink-0" id="budget-bima-avatar"></div>
+        <div>
+          <h2 class="font-rpg text-lg sm:text-xl font-bold leading-tight">Perencanaan Modal Usaha Bima</h2>
+          <p class="text-xs text-emerald-100">Memeriksa Tabungan Awal & Rincian Biaya Pembukaan Toko Pertama</p>
+        </div>
+      </div>
+
+      <div class="p-4 sm:p-5 space-y-4 max-h-[82vh] overflow-y-auto rpg-scroll">
+        <div class="bg-sky-100 border-2 border-sky-400 rounded-2xl p-3.5 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-extrabold uppercase text-sky-800">Total Tabungan Bima Saat Ini</div>
+            <div class="text-[11px] text-sky-700">Hasil menabung & bekerja keras sebelum buka usaha</div>
+          </div>
+          <div class="font-rpg text-xl sm:text-2xl font-bold text-sky-950">Rp 30.000.000</div>
+        </div>
+
+        <div class="bg-white border-2 border-amber-200 rounded-2xl p-3.5 space-y-2.5 text-xs sm:text-sm">
+          <div class="font-rpg font-bold text-amber-950 text-sm border-b border-amber-200 pb-1.5">
+            📋 Rincian Anggaran Pembukaan Toko Pertama:
+          </div>
+
+          <div class="flex items-center justify-between py-1">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🏠</span>
+              <div>
+                <div class="font-bold text-slate-800">1. Sewa Toko Pertama (1 Tahun)</div>
+                <div class="text-[11px] text-slate-500">Kontrak tempat strategis di pinggir jalan kampung</div>
+              </div>
+            </div>
+            <span class="font-rpg font-bold text-rose-600">- Rp 5.000.000</span>
+          </div>
+
+          <div class="flex items-center justify-between py-1 border-t border-slate-100">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🗄️</span>
+              <div>
+                <div class="font-bold text-slate-800">2. Perlengkapan & Perabotan Toko</div>
+                <div class="text-[11px] text-slate-500">Rak display, etalase, meja kasir, kulkas & timbangan</div>
+              </div>
+            </div>
+            <span class="font-rpg font-bold text-rose-600">- Rp 15.000.000</span>
+          </div>
+
+          <div class="flex items-center justify-between py-1 border-t border-slate-100">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">📦</span>
+              <div>
+                <div class="font-bold text-slate-800">3. Stok Barang Dagangan Awal</div>
+                <div class="text-[11px] text-slate-500">Sembako, minuman segar, jajanan & alat tulis pelajar</div>
+              </div>
+            </div>
+            <span class="font-rpg font-bold text-rose-600">- Rp 1.500.000</span>
+          </div>
+
+          <div class="border-t-2 border-dashed border-amber-300 pt-2.5 flex items-center justify-between font-extrabold text-sm sm:text-base">
+            <span class="text-slate-700">Total Investasi Awal Terpakai:</span>
+            <span class="font-rpg text-amber-800">Rp 21.500.000</span>
+          </div>
+
+          <div class="bg-emerald-50 border border-emerald-300 rounded-xl p-2.5 flex items-center justify-between">
+            <span class="font-bold text-emerald-900 text-xs sm:text-sm">💰 Sisa Saldo untuk Kas Usaha & Cadangan:</span>
+            <span class="font-rpg font-bold text-emerald-700 text-base sm:text-lg">Rp 8.500.000</span>
+          </div>
+        </div>
+
+        <button onclick="confirmInitialBudgetSetup()" class="btn-rpg w-full bg-emerald-500 border-emerald-700 text-white font-rpg font-bold py-3 rounded-2xl text-base shadow-lg">
+          ✅ Cairkan Anggaran & Buka Warung Josjis!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TOP HUD                                                               -->
+  <!-- ===================================================================== -->
+  <header class="z-20 bg-amber-50/95 backdrop-blur-md border-b-4 border-amber-700/30 px-2 sm:px-4 py-1.5 shadow-lg">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-1.5 sm:gap-3">
+      <div class="flex items-center gap-2 bg-amber-100 border-2 border-amber-300 rounded-2xl px-2.5 py-1 shadow-inner">
+        <div class="text-xl sm:text-2xl" id="hud-weather-icon" title="Cuaca Hari Ini">☀️</div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-rpg font-bold text-amber-900 text-xs sm:text-sm" id="hud-day">Hari ke-1</span>
+            <span class="text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-full bg-amber-600 text-white" id="hud-level-badge">Warung Josjis Lv.1</span>
+          </div>
+          <div class="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-slate-700">
+            <span id="hud-clock">07:00</span>
+            <span class="text-[10px] font-semibold text-amber-700" id="hud-day-name">(Senin)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5 sm:gap-2.5">
+        <div onclick="openModal('modal-finance')" class="cursor-pointer bg-emerald-50 hover:bg-emerald-100 transition border-2 border-emerald-400 rounded-2xl px-2.5 py-1 flex items-center gap-1.5 shadow-sm" title="Kas Usaha">
+          <span class="text-lg sm:text-xl">🏪</span>
+          <div>
+            <div class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-emerald-700 leading-none">Kas Usaha</div>
+            <div class="font-rpg font-bold text-emerald-900 text-xs sm:text-base leading-tight" id="hud-business-cash">Rp 8.500.000</div>
+          </div>
+        </div>
+
+        <div onclick="openModal('modal-savings')" class="cursor-pointer bg-sky-50 hover:bg-sky-100 transition border-2 border-sky-400 rounded-2xl px-2.5 py-1 flex items-center gap-1.5 shadow-sm" title="Tabungan & Dompet Pribadi">
+          <span class="text-lg sm:text-xl">🐷</span>
+          <div>
+            <div class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-sky-700 leading-none">Tabungan</div>
+            <div class="font-rpg font-bold text-sky-900 text-xs sm:text-base leading-tight" id="hud-savings-cash">Rp 0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <div class="hidden md:flex flex-col bg-rose-50 border-2 border-rose-200 rounded-2xl px-2.5 py-1 min-w-[105px]">
+          <div class="flex justify-between text-[10px] font-bold text-rose-800">
+            <span>⚡ Energi</span>
+            <span id="hud-energy-text">100%</span>
+          </div>
+          <div class="w-full h-2 bg-rose-200 rounded-full overflow-hidden mt-0.5">
+            <div id="hud-energy-bar" class="h-full bg-gradient-to-r from-rose-500 to-amber-400 transition-all duration-300" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <div class="bg-yellow-50 border-2 border-yellow-300 rounded-2xl px-2.5 py-1 flex items-center gap-1" title="Reputasi Warung">
+          <span class="text-sm sm:text-base">⭐</span>
+          <span class="font-rpg font-bold text-yellow-800 text-xs sm:text-sm" id="hud-reputation">3.0</span>
+        </div>
+
+        <button id="btn-audio-toggle" onclick="toggleAudio()" class="btn-rpg bg-amber-200 border-amber-400 text-amber-900 p-2 rounded-xl text-sm font-bold" title="Suara & Musik">
+          🔊
+        </button>
+
+        <button onclick="openSettingsMenu(false)" class="btn-rpg bg-slate-200 border-slate-400 text-slate-900 p-2 rounded-xl text-sm font-bold" title="Pengaturan">
+          ⚙️
+        </button>
+
+        <button onclick="openModal('modal-characters')" class="btn-rpg bg-pink-500 border-pink-700 text-white px-2.5 py-2 rounded-xl text-xs sm:text-sm font-bold" title="Tokoh & Promosi">
+          👥
+        </button>
+
+        <button id="btn-hp-open" onclick="openPhoneModal()" class="btn-rpg relative bg-emerald-500 border-emerald-700 text-white px-2.5 py-2 rounded-xl text-xs sm:text-sm font-bold" title="HP Bima (Aplikasi Restok)">
+          📱
+          <span id="hp-notif-badge" class="hidden absolute -top-1.5 -right-1.5 bg-rose-600 text-white text-[10px] font-extrabold px-1.5 py-0.2 rounded-full border border-white animate-bounce">!</span>
+        </button>
+
+        <button onclick="openModal('modal-guide')" class="btn-rpg bg-indigo-500 border-indigo-700 text-white px-2.5 py-2 rounded-xl text-xs sm:text-sm font-bold" title="Panduan">
+          ❓
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- MAIN GAME VIEWPORT (2.5D REALISTIC CITAMPI-STYLE CANVAS)              -->
+  <!-- ===================================================================== -->
+  <main id="game-container">
+    <canvas id="warungCanvas"></canvas>
+
+    <div id="news-ticker" class="pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 z-10 w-[92%] max-w-xl">
+      <div class="bg-slate-900/85 backdrop-blur-sm text-amber-200 border-2 border-amber-400/60 rounded-full px-4 py-1.5 text-xs sm:text-sm font-semibold shadow-lg flex items-center justify-center gap-2 text-center">
+        <span id="news-icon">📢</span>
+        <span id="news-text">Selamat pagi Bima! Om Heri siap membantumu memulai hari pertama berjualan di Warung Josjis.</span>
+      </div>
+    </div>
+
+    <div id="promo-banner" class="hidden pointer-events-none absolute top-14 left-1/2 -translate-x-1/2 z-10">
+      <div class="bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 text-white border-2 border-yellow-300 rounded-full px-4 py-1 text-xs font-extrabold shadow-xl flex items-center gap-2 animate-bounce">
+        <span>🎥✨</span>
+        <span id="promo-banner-text">LIVE PROMO BIM WING! Pelanggan berdatangan 2x lebih ramai!</span>
+      </div>
+    </div>
+
+    <!-- KONTROL HUD KUSTOMISASI -->
+    <div id="hud-analog-wrapper" class="hud-draggable absolute bottom-24 left-4 z-20 w-28 h-28 rounded-full bg-slate-900/45 border-2 border-white/40 backdrop-blur-[2px] flex items-center justify-center shadow-xl">
+      <div id="hud-analog-knob" class="w-12 h-12 rounded-full bg-amber-400/90 border-2 border-amber-100 shadow-lg pointer-events-none flex items-center justify-center text-amber-950 font-bold text-xs">
+        🕹️
+      </div>
+    </div>
+
+    <div id="hud-interact-wrapper" class="hud-draggable absolute bottom-24 right-24 z-20">
+      <button id="interaction-btn" onclick="triggerNearestInteraction()" class="btn-rpg bg-amber-400 border-amber-600 text-amber-950 font-rpg font-bold w-16 h-16 sm:w-auto sm:h-auto sm:px-5 sm:py-3 rounded-full sm:rounded-2xl shadow-xl text-xs sm:text-sm flex flex-col sm:flex-row items-center justify-center gap-1">
+        <span id="interaction-icon" class="text-lg">👉</span>
+        <span id="interaction-label" class="text-[10px] sm:text-sm leading-none">Interaksi</span>
+      </button>
+    </div>
+
+    <div id="hud-sprint-wrapper" class="hud-draggable absolute bottom-24 right-4 z-20">
+      <button id="hud-sprint-btn" class="btn-rpg bg-sky-500 border-sky-700 text-white font-rpg font-bold w-16 h-16 rounded-full shadow-xl flex flex-col items-center justify-center">
+        <span class="text-lg leading-none">👟</span>
+        <span class="text-[10px] mt-0.5">Lari</span>
+      </button>
+    </div>
+
+    <div id="toast-container" class="pointer-events-none absolute top-14 right-3 z-30 flex flex-col gap-2 max-w-xs"></div>
+
+    <!-- KOTAK DIALOG VISUAL NOVEL RPG -->
+    <div id="vn-dialog-overlay" class="hidden fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-[2px] flex items-end justify-center p-3 sm:p-6">
+      <div class="animate-modal w-full max-w-3xl bg-amber-50 border-4 border-amber-800 rounded-3xl shadow-2xl overflow-hidden">
+        <div class="flex flex-col sm:flex-row items-stretch">
+          <div id="vn-portrait-box" class="bg-gradient-to-b from-amber-200 to-amber-300 sm:w-44 p-3 flex flex-col items-center justify-center border-b-4 sm:border-b-0 sm:border-r-4 border-amber-800">
+            <div id="vn-avatar-svg" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white/80 border-2 border-amber-700 shadow-inner flex items-center justify-center overflow-hidden"></div>
+            <span id="vn-role-badge" class="mt-2 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-800 text-amber-100 text-center">
+              Mentor Warung
+            </span>
+          </div>
+
+          <div class="flex-1 p-4 sm:p-5 flex flex-col justify-between bg-amber-50">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <h3 id="vn-speaker-name" class="font-rpg text-lg sm:text-xl font-bold text-amber-950">Om Heri</h3>
+                <span id="vn-step-indicator" class="text-xs font-bold text-amber-700 bg-amber-200/80 px-2 py-0.5 rounded-lg">1 / 3</span>
+              </div>
+              <p id="vn-dialog-text" class="text-sm sm:text-base text-slate-800 leading-relaxed font-medium min-h-[4.5rem]"></p>
+            </div>
+
+            <div class="mt-4 pt-2 border-t border-amber-200 flex items-center justify-between gap-2">
+              <button id="vn-skip-btn" onclick="skipVNDialog()" class="text-xs font-bold text-slate-500 hover:text-slate-800 px-2 py-1">
+                Lewati Dialog ⏭
+              </button>
+              <button id="vn-next-btn" onclick="advanceVNDialog()" class="btn-rpg bg-emerald-500 border-emerald-700 text-white font-rpg font-bold px-5 py-2 rounded-2xl text-sm shadow">
+                Lanjut ▶
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- BOTTOM ACTION DOCK                                                    -->
+  <!-- ===================================================================== -->
+  <footer class="z-20 bg-amber-950 border-t-4 border-amber-800 px-2 py-2 shadow-2xl">
+    <div class="max-w-4xl mx-auto grid grid-cols-5 gap-1.5 sm:gap-3">
+      <button id="dock-cashier" onclick="triggerCashierAction()" class="btn-rpg relative bg-emerald-500 border-emerald-700 text-white rounded-2xl py-2 px-1 flex flex-col items-center justify-center shadow">
+        <span id="cashier-badge" class="hidden absolute -top-2 -right-1 bg-rose-600 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border-2 border-white animate-badge">!</span>
+        <span class="text-lg sm:text-xl">🧾</span>
+        <span class="font-rpg text-[11px] sm:text-xs font-bold mt-0.5">Kasir</span>
+      </button>
+
+      <button onclick="openModal('modal-market')" class="btn-rpg bg-amber-500 border-amber-700 text-amber-950 rounded-2xl py-2 px-1 flex flex-col items-center justify-center shadow">
+        <span class="text-lg sm:text-xl">🏷️</span>
+        <span class="font-rpg text-[11px] sm:text-xs font-bold mt-0.5">Atur Harga</span>
+      </button>
+
+      <button onclick="openPhoneModal()" class="btn-rpg relative bg-sky-500 border-sky-700 text-white rounded-2xl py-2 px-1 flex flex-col items-center justify-center shadow">
+        <span class="text-lg sm:text-xl">📱</span>
+        <span class="font-rpg text-[11px] sm:text-xs font-bold mt-0.5">HP Restok</span>
+      </button>
+
+      <button onclick="openModal('modal-savings')" class="btn-rpg bg-purple-500 border-purple-700 text-white rounded-2xl py-2 px-1 flex flex-col items-center justify-center shadow">
+        <span class="text-lg sm:text-xl">🚀</span>
+        <span class="font-rpg text-[11px] sm:text-xs font-bold mt-0.5">Tabung & Upgrade</span>
+      </button>
+
+      <button id="dock-sleep" onclick="confirmCloseShopEarly()" class="btn-rpg bg-rose-500 border-rose-700 text-white rounded-2xl py-2 px-1 flex flex-col items-center justify-center shadow">
+        <span class="text-lg sm:text-xl">🌙</span>
+        <span class="font-rpg text-[11px] sm:text-xs font-bold mt-0.5">Tutup Warung</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: MEJA KASIR                                                   -->
+  <!-- ===================================================================== -->
+  <div id="modal-cashier" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="animate-modal bg-amber-50 border-4 border-amber-700 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <div class="bg-emerald-600 text-white px-5 py-3 flex items-center justify-between border-b-4 border-emerald-800">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🧾</span>
+          <div>
+            <h2 class="font-rpg text-lg font-bold leading-none">Meja Kasir Warung Josjis</h2>
+            <p class="text-xs text-emerald-100" id="cashier-cust-name">Customer: Bu Siti</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-cashier')" class="bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl px-3 py-1 text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-4 sm:p-5 space-y-4 max-h-[82vh] overflow-y-auto rpg-scroll">
+        <div class="bg-white border-2 border-amber-200 rounded-2xl p-3 shadow-inner">
+          <div class="text-xs font-bold uppercase text-amber-700 mb-2 flex justify-between">
+            <span>Keranjang Belanja Pelanggan</span>
+            <span id="cashier-patience-label" class="text-emerald-600">Siap Bayar</span>
+          </div>
+          <div id="cashier-items-list" class="space-y-1.5 text-sm"></div>
+          <div class="border-t-2 border-dashed border-amber-300 mt-3 pt-2 flex justify-between items-center font-extrabold text-base text-slate-800">
+            <span>Total Tagihan Belanja:</span>
+            <span class="text-emerald-700 font-rpg text-xl" id="cashier-total-bill">Rp 15.000</span>
+          </div>
+        </div>
+
+        <div class="bg-amber-100/80 border-2 border-amber-300 rounded-2xl p-3.5 space-y-2.5">
+          <div class="text-xs font-extrabold text-amber-950 text-center">
+            🔢 Pilih Nomor Tagihan yang Benar (Tombol Hijau) agar Pembeli Membayar:
+          </div>
+          <div id="cashier-number-choices" class="grid grid-cols-2 gap-2.5"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL HP BIMA                                                         -->
+  <!-- ===================================================================== -->
+  <div id="modal-phone" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="animate-modal bg-slate-900 border-4 border-slate-700 rounded-[2.2rem] w-full max-w-sm overflow-hidden shadow-2xl text-white">
+      <div class="bg-slate-950 px-5 py-2 flex items-center justify-between text-[11px] font-bold text-slate-300">
+        <span>📶 BimaCell 5G</span>
+        <span id="phone-clock-display">07:00</span>
+        <span>🔋 96%</span>
+      </div>
+
+      <div class="p-4 bg-gradient-to-b from-slate-800 to-slate-900 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">📱</span>
+            <div>
+              <h2 class="font-rpg text-base font-bold text-amber-300 leading-none">HP Bima</h2>
+              <p class="text-[11px] text-slate-400">Aplikasi Grosir & Restok Toko</p>
+            </div>
+          </div>
+          <button onclick="closeModal('modal-phone')" class="bg-slate-700 hover:bg-slate-600 text-white rounded-xl px-3 py-1 text-xs font-bold">Tutup ✕</button>
+        </div>
+
+        <div id="phone-home-app-grid" class="bg-slate-950/60 border border-slate-700 rounded-2xl p-3 flex items-center gap-3">
+          <button onclick="openPhoneCartApp()" class="btn-rpg w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 border-emerald-800 flex flex-col items-center justify-center shadow-lg shrink-0">
+            <span class="text-2xl">🛒</span>
+            <span class="text-[9px] font-extrabold text-slate-950 uppercase mt-0.5">Keranjang</span>
+          </button>
+          <div class="text-xs text-slate-300">
+            <div class="font-bold text-white">Aplikasi Keranjang Grosir</div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Tekan ikon keranjang untuk memesan paket restok semua barang sekaligus.</p>
+          </div>
+        </div>
+
+        <div id="phone-cart-app-view" class="bg-amber-50 text-slate-900 border-2 border-amber-400 rounded-2xl p-3.5 space-y-3">
+          <div class="flex items-center justify-between border-b border-amber-200 pb-2">
+            <span class="font-rpg font-bold text-amber-950 text-sm">🛒 Paket Restok Lengkap</span>
+            <span class="text-xs font-extrabold text-emerald-700" id="phone-cash-info">Kas: Rp 0</span>
+          </div>
+
+          <div id="phone-restock-bundle-list" class="space-y-1 text-xs max-h-36 overflow-y-auto rpg-scroll"></div>
+
+          <div class="bg-amber-100 rounded-xl p-2 flex items-center justify-between text-xs font-extrabold">
+            <span>Total Paket Restok:</span>
+            <span class="font-rpg text-base text-emerald-800" id="phone-bundle-total">Rp 0</span>
+          </div>
+
+          <div id="phone-order-action-area">
+            <button onclick="orderRestockBundle()" class="btn-rpg w-full bg-emerald-500 border-emerald-700 text-white font-rpg font-bold py-2.5 rounded-xl text-sm shadow">
+              🛍️ Beli Restok Sekarang
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: ATUR HARGA & MARGIN KEUNTUNGAN PRODUK                        -->
+  <!-- ===================================================================== -->
+  <div id="modal-market" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="animate-modal bg-amber-50 border-4 border-amber-700 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="bg-amber-500 text-amber-950 px-5 py-3 flex items-center justify-between border-b-4 border-amber-700">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🏷️</span>
+          <div>
+            <h2 class="font-rpg text-lg sm:text-xl font-bold leading-none">Atur Harga Jual & Stok Rak</h2>
+            <p class="text-xs text-amber-900">Tentukan strategi margin (Hemat, Normal, Mahal) untuk tiap produk</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-market')" class="bg-amber-800 hover:bg-amber-900 text-white rounded-xl px-3 py-1 text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-4 sm:p-5 space-y-4 overflow-y-auto rpg-scroll">
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-white border-2 border-amber-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold">
+          <span>💰 Kas Usaha: <b id="market-cash-display" class="text-emerald-700">Rp 0</b></span>
+          <span>📦 Kapasitas Rak: <b id="market-capacity-text" class="text-indigo-700">0 / 600 item</b></span>
+        </div>
+        <div id="market-products-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: BUKU KAS USAHA & LAPORAN ARUS KAS                            -->
+  <!-- ===================================================================== -->
+  <div id="modal-finance" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="animate-modal bg-amber-50 border-4 border-sky-700 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="bg-sky-600 text-white px-5 py-3 flex items-center justify-between border-b-4 border-sky-800">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📒</span>
+          <div>
+            <h2 class="font-rpg text-lg sm:text-xl font-bold leading-none">Buku Kas & Pembukuan Warung</h2>
+            <p class="text-xs text-sky-100">Catatan pemasukan, pengeluaran modal, dan piutang pelanggan</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-finance')" class="bg-sky-800 hover:bg-sky-900 text-white rounded-xl px-3 py-1 text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-4 sm:p-5 space-y-4 overflow-y-auto rpg-scroll">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
+          <div class="bg-white border-2 border-emerald-200 rounded-2xl p-2.5">
+            <div class="text-[11px] font-bold text-slate-500">Omzet Hari Ini</div>
+            <div id="fin-today-rev" class="font-rpg font-bold text-emerald-700 text-sm sm:text-base mt-0.5">Rp 0</div>
+          </div>
+          <div class="bg-white border-2 border-amber-200 rounded-2xl p-2.5">
+            <div class="text-[11px] font-bold text-slate-500">Modal Terjual</div>
+            <div id="fin-today-cogs" class="font-rpg font-bold text-amber-800 text-sm sm:text-base mt-0.5">Rp 0</div>
+          </div>
+          <div class="bg-white border-2 border-indigo-200 rounded-2xl p-2.5">
+            <div class="text-[11px] font-bold text-slate-500">Laba Kotor</div>
+            <div id="fin-today-profit" class="font-rpg font-bold text-indigo-700 text-sm sm:text-base mt-0.5">Rp 0</div>
+          </div>
+          <div class="bg-white border-2 border-rose-200 rounded-2xl p-2.5">
+            <div class="text-[11px] font-bold text-slate-500">Piutang Kasbon</div>
+            <div id="fin-receivables" class="font-rpg font-bold text-rose-700 text-sm sm:text-base mt-0.5">Rp 0</div>
+          </div>
+        </div>
+
+        <div class="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden">
+          <div class="bg-slate-100 px-3.5 py-2 text-xs font-extrabold text-slate-700 border-b border-slate-200">
+            Riwayat Transaksi Keuangan Bima
+          </div>
+          <div id="fin-log-list" class="divide-y divide-slate-100 text-xs max-h-60 overflow-y-auto rpg-scroll"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 4: TABUNGAN PELAJAR, DOMPET PRIBADI & UPGRADE WARUNG            -->
+  <!-- ===================================================================== -->
+  <div id="modal-savings" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="animate-modal bg-amber-50 border-4 border-purple-700 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="bg-purple-600 text-white px-5 py-3 flex items-center justify-between border-b-4 border-purple-800">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🚀</span>
+          <div>
+            <h2 class="font-rpg text-lg sm:text-xl font-bold leading-none">Tabungan Masa Depan & Upgrade Warung</h2>
+            <p class="text-xs text-purple-100">Kelola tabungan pendidikan, dana darurat, dan perluas usahamu</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-savings')" class="bg-purple-800 hover:bg-purple-900 text-white rounded-xl px-3 py-1 text-sm font-bold">✕</button>
+      </div>
+
+      <div class="p-4 sm:p-5 space-y-5 overflow-y-auto rpg-scroll">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="bg-white border-2 border-indigo-200 rounded-2xl p-3.5">
+            <div class="text-xs font-bold text-indigo-600">👛 Dompet Pribadi (Gaji)</div>
+            <div class="font-rpg text-xl font-bold text-slate-800 mt-1" id="sav-wallet-val">Rp 0</div>
+            <p class="text-[11px] text-slate-500 mt-1">Bisa dipakai jajan pemulih energi atau ditabung.</p>
+          </div>
+          <div class="bg-white border-2 border-sky-300 rounded-2xl p-3.5">
+            <div class="text-xs font-bold text-sky-600">🎓 Tabungan Pendidikan</div>
+            <div class="font-rpg text-xl font-bold text-sky-900 mt-1" id="sav-edu-val">Rp 0</div>
+            <p class="text-[11px] text-slate-500 mt-1">Target masa depan! Dapat bunga edukasi +2% tiap hari.</p>
+          </div>
+          <div class="bg-white border-2 border-emerald-300 rounded-2xl p-3.5">
+            <div class="text-xs font-bold text-emerald-600">🛡️ Dana Darurat</div>
+            <div class="font-rpg text-xl font-bold text-emerald-900 mt-1" id="sav-emerg-val">Rp 0</div>
+            <p class="text-[11px] text-slate-500 mt-1">Penyelamat saat terjadi musibah atau kerugian tak terduga.</p>
+          </div>
+        </div>
+
+        <div class="bg-purple-100/70 border-2 border-purple-200 rounded-2xl p-3.5">
+          <div class="font-rpg font-bold text-purple-950 text-sm mb-2">Gunakan Dompet Pribadi:</div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="transferWalletToEdu(10000)" class="btn-rpg bg-sky-500 border-sky-700 text-white text-xs font-bold px-3 py-2 rounded-xl">
+              + Tabung Pendidikan (Rp 10.000)
+            </button>
+            <button onclick="transferWalletToEmerg(10000)" class="btn-rpg bg-emerald-500 border-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl">
+              + Dana Darurat (Rp 10.000)
+            </button>
+            <button onclick="buyPersonalSnack()" class="btn-rpg bg-rose-500 border-rose-700 text-white text-xs font-bold px-3 py-2 rounded-xl">
+              🍹 Beli Jus & Istirahat (+35 Energi | Rp 5.000)
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-rpg font-bold text-slate-800 text-base mb-2">🏗️ Ekspansi & Fasilitas Warung (Gunakan Kas Usaha)</h3>
+          <div id="upgrade-cards-container" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 5: EVENT DILEMA KEUANGAN & KEWIRAUSAHAAN                        -->
+  <!-- ===================================================================== -->
+  <div id="modal-event" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="animate-modal bg-amber-50 border-4 border-amber-600 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+      <div class="bg-amber-500 text-amber-950 px-5 py-3 flex items-center gap-2 border-b-4 border-amber-700">
+        <span class="text-2xl" id="event-modal-icon">⚡</span>
+        <h2 class="font-rpg text-lg font-bold" id="event-modal-title">Kejadian di Warung!</h2>
+      </div>
+      <div class="p-5 space-y-4">
+        <p class="text-sm sm:text-base text-slate-800 leading-relaxed font-medium" id="event-modal-desc"></p>
+        <div class="bg-amber-100 border-l-4 border-amber-600 p-3 rounded-r-xl text-xs text-amber-950" id="event-modal-hint"></div>
+        <div id="event-modal-choices" class="space-y-2 pt-1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 6: LAPORAN LABA RUGI HARIAN                                     -->
+  <!-- ===================================================================== -->
+  <div id="modal-eod" class="hidden fixed inset-0 z-50 bg-slate-900/85 backdrop-blur-md flex items-center justify-center p-3">
+    <div class="animate-modal bg-amber-50 border-4 border-indigo-700 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <div class="bg-indigo-600 text-white px-5 py-3.5 text-center border-b-4 border-indigo-800">
+        <div class="text-3xl mb-1">🌙</div>
+        <h2 class="font-rpg text-xl font-bold" id="eod-title">Laporan Tutup Warung - Hari ke-1</h2>
+        <p class="text-xs text-indigo-200">Evaluasi kinerja bisnis & alokasikan keuntungan bersihmu</p>
+      </div>
+
+      <div class="p-4 sm:p-5 space-y-4 max-h-[82vh] overflow-y-auto rpg-scroll">
+        <div class="bg-white border-2 border-slate-200 rounded-2xl p-3.5 space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-slate-600">Total Penjualan (Omzet):</span>
+            <span class="font-bold text-emerald-600" id="eod-rev">Rp 0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-600">Harga Pokok Terjual (HPP):</span>
+            <span class="font-bold text-slate-700" id="eod-cogs">- Rp 0</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-600">Biaya Listrik & Kebersihan:</span>
+            <span class="font-bold text-rose-600" id="eod-opex">- Rp 5.000</span>
+          </div>
+          <div class="border-t-2 border-dashed border-slate-300 pt-2 flex justify-between items-center font-extrabold text-base">
+            <span>Laba Bersih Hari Ini:</span>
+            <span class="font-rpg text-xl text-indigo-700" id="eod-net-profit">Rp 0</span>
+          </div>
+        </div>
+
+        <div id="eod-allocation-box" class="bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-3.5 space-y-2.5">
+          <div class="font-rpg font-bold text-indigo-950 text-sm">📊 Pilih Strategi Alokasi Laba Bersih:</div>
+          <label class="flex items-start gap-2.5 p-2 rounded-xl bg-white border border-indigo-200 cursor-pointer hover:bg-indigo-100/50">
+            <input type="radio" name="profit-alloc" value="balanced" checked class="mt-1 accent-indigo-600">
+            <div class="text-xs">
+              <div class="font-bold text-slate-800">Seimbang (60% Modal Usaha, 25% Tabungan, 15% Gaji Pribadi)</div>
+              <div class="text-slate-500">Direkomendasikan! Warung tumbuh stabil sambil menabung rutin.</div>
+            </div>
+          </label>
+          <label class="flex items-start gap-2.5 p-2 rounded-xl bg-white border border-indigo-200 cursor-pointer hover:bg-indigo-100/50">
+            <input type="radio" name="profit-alloc" value="growth" class="mt-1 accent-indigo-600">
+            <div class="text-xs">
+              <div class="font-bold text-slate-800">Fokus Ekspansi (85% Modal Usaha, 10% Tabungan, 5% Gaji Pribadi)</div>
+              <div class="text-slate-500">Mempercepat kulakan grosir dalam jumlah besar.</div>
+            </div>
+          </label>
+          <label class="flex items-start gap-2.5 p-2 rounded-xl bg-white border border-indigo-200 cursor-pointer hover:bg-indigo-100/50">
+            <input type="radio" name="profit-alloc" value="saver" class="mt-1 accent-indigo-600">
+            <div class="text-xs">
+              <div class="font-bold text-slate-800">Penabung Cerdas (40% Modal Usaha, 45% Tabungan, 15% Gaji Pribadi)</div>
+              <div class="text-slate-500">Memaksimalkan tabungan pendidikan & dana darurat.</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="bg-amber-100 border-2 border-amber-300 rounded-2xl p-3 text-xs text-amber-950">
+          <span class="font-bold">💡 Catatan Mentor Keuangan:</span>
+          <span id="eod-tip-text">Selalu periksa stok yang hampir kedaluwarsa agar tidak merugi!</span>
+        </div>
+
+        <button onclick="startNextDay()" class="btn-rpg w-full bg-emerald-500 border-emerald-700 text-white font-rpg font-bold py-3 rounded-2xl text-base shadow-lg">
+          ☀️ Simpan Laporan & Mulai Hari Berikutnya
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 7: PANDUAN BERMAIN & RESET DATA                                 -->
+  <!-- ===================================================================== -->
+  <div id="modal-guide" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="animate-modal bg-amber-50 border-4 border-indigo-700 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <div class="bg-indigo-600 text-white px-5 py-3 flex items-center justify-between border-b-4 border-indigo-800">
+        <h2 class="font-rpg text-lg font-bold">📖 Panduan Warung Josjis</h2>
+        <button onclick="closeModal('modal-guide')" class="bg-indigo-800 text-white rounded-xl px-3 py-1 text-sm font-bold">✕</button>
+      </div>
+      <div class="p-5 space-y-3 text-xs sm:text-sm text-slate-700 max-h-[75vh] overflow-y-auto rpg-scroll">
+        <div class="bg-white p-3 rounded-2xl border border-amber-200">
+          <h3 class="font-rpg font-bold text-amber-900 text-base mb-1">1. Kendalikan Bima & Layani Customer</h3>
+          <p>Gunakan <b>WASD / Panah / Analog</b> atau <b>klik/sentuh</b> area dalam warung untuk menggerakkan <b>Bima</b> ke Papan Buka/Tutup, Meja Kasir, Rak Stok, Celengan Tabungan, atau Buku Kas.</p>
+        </div>
+        <div class="bg-white p-3 rounded-2xl border border-amber-200">
+          <h3 class="font-rpg font-bold text-emerald-800 text-base mb-1">2. Nasihat Om Heri & Tantangan Ahmad</h3>
+          <p>Ikuti arahan <b>Om Heri</b> dalam mengelola stok dan harga jual. Buktikan kepada <b>Ahmad</b> (mantan bos Bima) bahwa usaha mandiri yang jujur dan tertib pembukuan bisa jauh lebih sukses!</p>
+        </div>
+        <div class="bg-white p-3 rounded-2xl border border-amber-200">
+          <h3 class="font-rpg font-bold text-pink-700 text-base mb-1">3. Dukungan Promosi Bim Wing</h3>
+          <p>Saat reputasi warung Bima meningkat, <b>Bim Wing</b> (influencer terkenal) akan datang membuat konten promosi gratis sehingga customer berdatangan membludak!</p>
+        </div>
+        <div class="pt-2 flex justify-between items-center border-t border-amber-200">
+          <button onclick="resetGameConfirm()" class="btn-rpg bg-rose-100 border-rose-300 text-rose-700 font-bold px-3 py-2 rounded-xl text-xs">
+            🗑️ Reset Progres Game
+          </button>
+          <button onclick="closeModal('modal-guide')" class="btn-rpg bg-indigo-600 border-indigo-800 text-white font-rpg font-bold px-5 py-2 rounded-xl text-sm">
+            Siap Berjualan!
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 8: PROFIL TOKOH & HUBUNGAN KARAKTER                             -->
+  <!-- ===================================================================== -->
+  <div id="modal-characters" class="hidden fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="animate-modal bg-amber-50 border-4 border-pink-700 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[88vh]">
+      <div class="bg-pink-600 text-white px-5 py-3 flex items-center justify-between border-b-4 border-pink-800">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">👥</span>
+          <div>
+            <h2 class="font-rpg text-lg font-bold leading-none">Tokoh & Relasi Warung Josjis</h2>
+            <p class="text-xs text-pink-100">Kenali mentor, rekan promosi, dan pelanggan di sekitarmu</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-characters')" class="bg-pink-800 text-white rounded-xl px-3 py-1 text-sm font-bold">✕</button>
+      </div>
+
+      <div id="characters-list-body" class="p-4 space-y-3 overflow-y-auto rpg-scroll"></div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT GAME ENGINE, AUDIO SYNTH, 2.5D RENDERER & LOGIC            -->
+  <!-- ===================================================================== -->
+  <script>
+    /**
+     * =========================================================================
+     * 1. MODUL AUDIO CHIPTUNE & EFEK SUARA (WEB AUDIO API)
+     * =========================================================================
+     */
+    const SoundFX = (() => {
+      let ctx = null;
+      let masterGain = null;
+      let volume = 0.8;
+      let enabled = true;
+      let bgmStarted = false;
+
+      function init() {
+        if (!ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            ctx = new AudioCtx();
+            masterGain = ctx.createGain();
+            masterGain.gain.value = enabled ? volume : 0;
+            masterGain.connect(ctx.destination);
+          }
+        }
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+      }
+
+      function tone(freq, type = 'sine', duration = 0.12, delay = 0, vol = 0.25) {
+        if (!enabled || volume <= 0) return;
+        init();
+        if (!ctx || !masterGain) return;
+        const now = ctx.currentTime + delay;
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        g.gain.setValueAtTime(vol, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+      }
+
+      function ensureBGM() {
+        init();
+        if (bgmStarted || !ctx) return;
+        bgmStarted = true;
+        const melody = [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880.0, 698.46];
+        let step = 0;
+        setInterval(() => {
+          if (enabled && volume > 0 && document.visibilityState === 'visible') {
+            tone(melody[step % melody.length], 'triangle', 0.22, 0, 0.06);
+            step++;
+          }
+        }, 620);
+      }
+
+      return {
+        ensureBGM,
+        pop: () => tone(520, 'sine', 0.08, 0, 0.18),
+        coin: () => {
+          tone(987.77, 'sine', 0.09, 0, 0.22);
+          tone(1318.51, 'sine', 0.18, 0.08, 0.25);
+        },
+        buy: () => {
+          tone(440, 'triangle', 0.09, 0, 0.2);
+          tone(659.25, 'triangle', 0.14, 0.08, 0.22);
+        },
+        door: () => {
+          tone(330, 'triangle', 0.12, 0, 0.18);
+          tone(493.88, 'triangle', 0.15, 0.09, 0.18);
+        },
+        bell: () => {
+          tone(1046.5, 'sine', 0.16, 0, 0.24);
+          tone(1318.51, 'sine', 0.24, 0.12, 0.24);
+        },
+        error: () => {
+          tone(220, 'sawtooth', 0.14, 0, 0.2);
+          tone(175, 'sawtooth', 0.18, 0.1, 0.2);
+        },
+        setVolume(pct) {
+          volume = Math.max(0, Math.min(1, pct / 100));
+          enabled = volume > 0;
+          if (masterGain && ctx) {
+            masterGain.gain.setValueAtTime(enabled ? volume : 0, ctx.currentTime);
+          }
+        },
+        getVolumePercent: () => Math.round(volume * 100),
+        toggle() {
+          enabled = !enabled;
+          if (masterGain && ctx) {
+            masterGain.gain.setValueAtTime(enabled ? volume : 0, ctx.currentTime);
+          }
+          return enabled;
+        }
+      };
+    })();
+
+    /**
+     * =========================================================================
+     * 2. DATA MASTER PRODUK, MARGIN, UPGRADE & TOKOH
+     * =========================================================================
+     */
+    const SAVE_KEY = 'warung_josjis_bima_save_v3';
+    const HUD_LAYOUT_KEY = 'warung_josjis_bima_hud_v1';
+    const DAYS_OF_WEEK = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+
+    const PRODUCTS_MASTER = [
+      { id: 'beras', name: 'Beras 1kg', icon: '🍚', category: 'sembako', baseWholesale: 12000, shelfLife: 7 },
+      { id: 'indomie', name: 'Mi Instan', icon: '🍜', category: 'sembako', baseWholesale: 2500, shelfLife: 6 },
+      { id: 'gorengan', name: 'Gorengan Hangat', icon: '🥟', category: 'jajanan', baseWholesale: 1000, shelfLife: 2 },
+      { id: 'buku', name: 'Buku & Pulpen', icon: '📓', category: 'alat_tulis', baseWholesale: 4000, shelfLife: 10 },
+      { id: 'esteh', name: 'Es Teh Manis', icon: '🧋', category: 'minuman', baseWholesale: 2000, shelfLife: 2 },
+      { id: 'sabun', name: 'Sabun & Sampo', icon: '🧼', category: 'kebutuhan', baseWholesale: 3500, shelfLife: 9 }
+    ];
+
+    const MARGIN_PRESETS = {
+      hemat: { label: 'Hemat (+15%)', multiplier: 1.15 },
+      normal: { label: 'Normal (+30%)', multiplier: 1.30 },
+      mahal: { label: 'Mahal (+50%)', multiplier: 1.50 }
+    };
+
+    const UPGRADES_MASTER = [
+      { id: 'extra_rack', name: 'Rak Besi Tambahan', icon: '🗄️', cost: 1500000, effectText: '+300 Kapasitas Stok', desc: 'Memperluas kapasitas penyimpanan barang dagangan di toko.' },
+      { id: 'fridge', name: 'Kulkas Etalase Dingin', icon: '🧊', cost: 2000000, effectText: '+2 Hari Masa Simpan', desc: 'Menjaga minuman & bahan segar lebih tahan lama.' },
+      { id: 'neon_banner', name: 'Spanduk Promo Terang', icon: '📢', cost: 1000000, effectText: '+25% Pelanggan Datang', desc: 'Menarik perhatian warga kampung yang melintas di depan toko.' },
+      { id: 'minimarket_lvl', name: 'Renovasi Toko Modern', icon: '🏪', cost: 4000000, effectText: '+1.0⭐ Reputasi Toko', desc: 'Meningkatkan kenyamanan belanja dan citra Warung Josjis.' }
+    ];
+
+    const CHARACTERS_INFO = {
+      bima: {
+        id: 'bima',
+        name: 'Bima (Pemilik Toko)',
+        role: 'Pemain Utama',
+        badgeColor: 'bg-slate-800 text-amber-300',
+        desc: 'Pemuda gigih yang menggunakan tabungan Rp 30 Juta untuk membuka Warung Josjis secara mandiri.'
+      },
+      om_heri: {
+        id: 'om_heri',
+        name: 'Om Heri (Paman Bima)',
+        role: 'Mentor & Tetangga Senior',
+        badgeColor: 'bg-amber-700 text-amber-100',
+        desc: 'Paman Bima yang berpengalaman berdagang dan membimbing pembukuan serta pelayanan pelanggan di hari pertama.'
+      },
+      ahmad: {
+        id: 'ahmad',
+        name: 'Ahmad (Mantan Bos)',
+        role: 'Saingan Bisnis',
+        badgeColor: 'bg-zinc-700 text-zinc-100',
+        desc: 'Mantan bos Bima yang suka pamer modal besar dan sesekali menawarkan pinjaman berbunga tinggi.'
+      },
+      bim_wing: {
+        id: 'bim_wing',
+        name: 'Bim Wing (Artis)',
+        role: 'Influencer Terkenal',
+        badgeColor: 'bg-blue-700 text-blue-100',
+        desc: 'Kreator konten & artis ramah yang siap membantu mempromosikan Warung Josjis secara gratis saat reputasi toko baik.'
+      }
+    };
+
+    const CUSTOMER_PROFILES = [
+      { id: 'npc1', name: 'Rani (Pelajar)' },
+      { id: 'npc2', name: 'Kevin (Mahasiswa)' },
+      { id: 'npc3', name: 'Raka (Pemuda)' },
+      { id: 'npc4', name: 'Dion (Gamer)' },
+      { id: 'npc5', name: 'Nadia (Siswi)' },
+      { id: 'npc6', name: 'Salsa (Warga)' }
+    ];
+
+    const FINANCIAL_TIPS = [
+      'Pisahkan Kas Usaha dari uang jajan pribadi agar modal kulakan tidak terpakai!',
+      'Atur margin harga Normal saat hari biasa, dan Hemat untuk menarik lebih banyak pembeli.',
+      'Catat setiap pemasukan dan pengeluaran di Buku Kas agar laba bersih terpantau jelas.',
+      'Sisihkan sebagian keuntungan ke Tabungan Pendidikan & Dana Darurat setiap tutup warung.'
+    ];
+
+    function formatRp(num) {
+      const val = Math.round(Number(num) || 0);
+      return 'Rp ' + val.toLocaleString('id-ID');
+    }
+
+    function getCharacterPortraitSVG(charId) {
+      const configs = {
+        bima: { bg: '#e0f2fe', hair: '#111827', shirt: '#18181b', accent: '#334155', detail: 'bima' },
+        om_heri: { bg: '#fef3c7', hair: '#4b5563', shirt: '#ffffff', accent: '#7f1d1d', detail: 'om_heri' },
+        ahmad: { bg: '#f4f4f5', hair: '#09090b', shirt: '#3f3f46', accent: '#ffffff', detail: 'ahmad' },
+        bim_wing: { bg: '#dbeafe', hair: '#0f172a', shirt: '#1d4ed8', accent: '#93c5fd', detail: 'bim_wing' }
+      };
+      const c = configs[charId] || configs.bima;
+      return `
+        <svg viewBox="0 0 100 100" class="w-full h-full">
+          <rect width="100" height="100" fill="${c.bg}"/>
+          <ellipse cx="50" cy="96" rx="30" ry="22" fill="${c.shirt}" stroke="#09090b" stroke-width="3"/>
+          ${c.detail === 'om_heri' ? '<path d="M30 78 L72 98 L62 100 L24 84 Z" fill="#7f1d1d" stroke="#09090b" stroke-width="2"/>' : ''}
+          ${c.detail === 'ahmad' ? '<polygon points="44,75 56,75 50,95" fill="#ffffff"/><rect x="48.5" y="76" width="3" height="15" fill="#09090b"/>' : ''}
+          ${c.detail === 'bim_wing' ? '<line x1="43" y1="78" x2="43" y2="92" stroke="#93c5fd" stroke-width="3"/><line x1="57" y1="78" x2="57" y2="92" stroke="#93c5fd" stroke-width="3"/>' : ''}
+          <rect x="26" y="24" width="48" height="46" rx="18" fill="#f3c69f" stroke="#09090b" stroke-width="3"/>
+          ${c.detail === 'om_heri'
+            ? '<rect x="24" y="34" width="7" height="22" rx="3" fill="#4b5563"/><rect x="69" y="34" width="7" height="22" rx="3" fill="#4b5563"/><path d="M40 31 Q50 29 60 31" stroke="#b45309" stroke-width="2" fill="none"/>'
+            : `<path d="M24 44 Q24 16 50 16 Q76 16 76 44 Q62 34 50 38 Q38 34 24 44 Z" fill="${c.hair}" stroke="#09090b" stroke-width="3"/>`
+          }
+          <circle cx="40" cy="48" r="3.5" fill="#09090b"/>
+          <circle cx="60" cy="48" r="3.5" fill="#09090b"/>
+          <circle cx="33" cy="54" r="4" fill="#fb7185" opacity="0.45"/>
+          <circle cx="67" cy="54" r="4" fill="#fb7185" opacity="0.45"/>
+          <path d="M43 58 Q50 65 57 58" stroke="#09090b" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </svg>
+      `;
+    }
+
+    /**
+     * =========================================================================
+     * 3. STATE UTAMA GAME, PEMAIN, RAK & ZONA INTERAKSI
+     * =========================================================================
+     */
+    function createDefaultInventory() {
+      const inv = {};
+      PRODUCTS_MASTER.forEach(p => {
+        inv[p.id] = {
+          marginKey: 'normal',
+          todayWholesaleCost: p.baseWholesale,
+          batches: [
+            { qty: 15, costPerUnit: p.baseWholesale, daysLeft: p.shelfLife }
+          ]
+        };
+      });
+      return inv;
+    }
+
+    let gameState = {
+      day: 1,
+      timeMinutes: 7 * 60,
+      weather: 'sunny',
+      businessCash: 8500000,
+      eduSavings: 0,
+      walletCash: 0,
+      emergencyFund: 0,
+      receivables: 0,
+      reputation: 3.0,
+      energy: 100,
+      shopOpen: false,
+      initialBudgetChecked: false,
+      tutorialDone: false,
+      eventTriggeredToday: false,
+      bimWingUsedToday: false,
+      bimWingPromoTimer: 0,
+      restockOrderTimer: 0,
+      restockBoxReady: false,
+      carryingRestockItems: {},
+      upgrades: [],
+      inventory: createDefaultInventory(),
+      todayStats: { revenue: 0, cogs: 0, customersServed: 0, expiredLoss: 0 },
+      logs: [
+        { time: '07:00', text: 'Modal awal toko dari tabungan Rp 30 Juta (Sisa Kas Usaha)', amount: 8500000 }
+      ]
+    };
+
+    const player = {
+      x: 480,
+      y: 330,
+      speed: 175,
+      dir: 'down',
+      walkFrame: 0,
+      isSprinting: false,
+      targetX: null,
+      targetY: null,
+      pendingZone: null
+    };
+
+    const introCutscene = {
+      active: false,
+      progress: 0,
+      doorOpenAmount: 0
+    };
+
+    const keys = {};
+    const analogInput = { active: false, x: 0, y: 0 };
+    let isHudCustomizeMode = false;
+    let customers = [];
+    let activeCustomer = null;
+    let specialVisitor = null;
+    let floatingParticles = [];
+    let vehicles = [
+      { x: 120, y: 495, speed: 95, color: 0xef4444 },
+      { x: 760, y: 525, speed: -85, color: 0x3b82f6 }
+    ];
+
+    window.addEventListener('keydown', (e) => {
+      keys[e.key] = true;
+      if (e.key === 'Shift') player.isSprinting = true;
+      if (e.key === ' ' || e.key === 'Enter') {
+        const vnEl = document.getElementById('vn-dialog-overlay');
+        if (vnEl && !vnEl.classList.contains('hidden')) {
+          advanceVNDialog();
+        }
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      keys[e.key] = false;
+      if (e.key === 'Shift') player.isSprinting = false;
+    });
+
+    const RACK_SLOTS = [
+      { prodId: 'beras', label: 'Rak Beras', x: 255, y: 155 },
+      { prodId: 'indomie', label: 'Rak Mi Instan', x: 380, y: 155 },
+      { prodId: 'gorengan', label: 'Etalase Gorengan', x: 505, y: 155 },
+      { prodId: 'buku', label: 'Rak Alat Tulis', x: 255, y: 245 },
+      { prodId: 'esteh', label: 'Kulkas Minuman', x: 380, y: 245 },
+      { prodId: 'sabun', label: 'Rak Sabun', x: 585, y: 215 }
+    ];
+
+    const ZONES = [
+      {
+        id: 'sign_board',
+        label: 'Buka/Tutup',
+        icon: '🪧',
+        x: 375,
+        y: 365,
+        r: 52,
+        action: () => toggleShopOpenSign()
+      },
+      {
+        id: 'cashier',
+        label: 'Meja Kasir',
+        icon: '🧾',
+        x: 480,
+        y: 315,
+        r: 64,
+        action: () => triggerCashierAction()
+      },
+      {
+        id: 'restock_room',
+        label: 'Ruang Restok',
+        icon: '📦',
+        x: 706,
+        y: 222,
+        r: 55,
+        action: () => interactRestockRoom()
+      },
+      {
+        id: 'savings_piggy',
+        label: 'Tabungan',
+        icon: '🐷',
+        x: 706,
+        y: 140,
+        r: 50,
+        action: () => openModal('modal-savings')
+      },
+      {
+        id: 'finance_book',
+        label: 'Buku Kas',
+        icon: '📒',
+        x: 706,
+        y: 306,
+        r: 50,
+        action: () => openModal('modal-finance')
+      },
+      ...RACK_SLOTS.map(rk => ({
+        id: `rack_${rk.prodId}`,
+        label: rk.label,
+        icon: '🗄️',
+        x: rk.x,
+        y: rk.y + 18,
+        r: 52,
+        action: () => interactSingleRack(rk)
+      }))
+    ];
+
+    /**
+     * =========================================================================
+     * 4. FUNGSI PEMBANTU STOK, HARGA, SPAWN CUSTOMER & SAVE/LOAD
+     * =========================================================================
+     */
+    function getProductTotalQty(prodId) {
+      const inv = gameState.inventory[prodId];
+      if (!inv || !Array.isArray(inv.batches)) return 0;
+      return inv.batches.reduce((sum, b) => sum + b.qty, 0);
+    }
+
+    function getTotalStockCount() {
+      return PRODUCTS_MASTER.reduce((sum, p) => sum + getProductTotalQty(p.id), 0);
+    }
+
+    function getMaxStockCapacity() {
+      return gameState.upgrades.includes('extra_rack') ? 900 : 600;
+    }
+
+    function getSellingPrice(prodId) {
+      const inv = gameState.inventory[prodId];
+      const prod = PRODUCTS_MASTER.find(p => p.id === prodId);
+      const baseCost = inv ? inv.todayWholesaleCost : (prod ? prod.baseWholesale : 1000);
+      const mult = (inv && MARGIN_PRESETS[inv.marginKey]) ? MARGIN_PRESETS[inv.marginKey].multiplier : 1.3;
+      return Math.round((baseCost * mult) / 500) * 500;
+    }
+
+    function getWarungLevelInfo() {
+      const upgCount = gameState.upgrades.length;
+      if (upgCount >= 3) return { level: 3, title: 'Lv.3 Minimarket Josjis' };
+      if (upgCount >= 1) return { level: 2, title: 'Lv.2 Warung Modern' };
+      return { level: 1, title: 'Lv.1 Warung Josjis' };
+    }
+
+    function addLog(text, amount, type = 'in') {
+      const h = Math.floor(gameState.timeMinutes / 60).toString().padStart(2, '0');
+      const m = Math.floor(gameState.timeMinutes % 60).toString().padStart(2, '0');
+      gameState.logs.unshift({ time: `${h}:${m}`, text, amount: Number(amount) || 0, type });
+      if (gameState.logs.length > 40) gameState.logs.pop();
+    }
+
+    function spawnFloatingText(x, y, text, color = '#fde047') {
+      floatingParticles.push({ x, y, text, color, vy: -32, life: 1.35 });
+    }
+
+    function rollDailyWeather() {
+      const r = Math.random();
+      gameState.weather = r < 0.65 ? 'sunny' : r < 0.88 ? 'cloudy' : 'rainy';
+    }
+
+    function generateDailyWholesalePrices() {
+      PRODUCTS_MASTER.forEach(p => {
+        const inv = gameState.inventory[p.id];
+        if (!inv) return;
+        const factor = 0.9 + Math.random() * 0.25;
+        inv.todayWholesaleCost = Math.max(500, Math.round((p.baseWholesale * factor) / 500) * 500);
+      });
+    }
+
+    function spawnCustomer() {
+      if (customers.length >= 4) return;
+      const available = PRODUCTS_MASTER.filter(p => getProductTotalQty(p.id) > 0);
+      if (available.length === 0) {
+        showToast('Stok di semua rak kosong! Segera pesan restok lewat HP.', 'error');
+        return;
+      }
+
+      const itemCount = Math.min(available.length, 2 + Math.floor(Math.random() * 2));
+      const shuffled = [...available].sort(() => Math.random() - 0.5).slice(0, itemCount);
+      const cart = [];
+      const waypoints = [];
+      let totalBill = 0;
+
+      shuffled.forEach(prod => {
+        const maxTake = Math.min(2, getProductTotalQty(prod.id));
+        const qty = Math.max(1, Math.ceil(Math.random() * maxTake));
+        const unitPrice = getSellingPrice(prod.id);
+        cart.push({ id: prod.id, name: prod.name, icon: prod.icon, qty, unitPrice });
+        totalBill += qty * unitPrice;
+
+        const rack = RACK_SLOTS.find(r => r.prodId === prod.id);
+        if (rack) {
+          waypoints.push({ x: rack.x, y: rack.y + 34, icon: prod.icon });
+        }
+      });
+
+      const prof = CUSTOMER_PROFILES[Math.floor(Math.random() * CUSTOMER_PROFILES.length)];
+      customers.push({
+        id: Date.now() + Math.random(),
+        profileId: prof.id,
+        name: prof.name,
+        x: 480,
+        y: 415,
+        walkFrame: 0,
+        state: 'browsing',
+        waypoints,
+        browsePause: 0.6,
+        cart,
+        totalBill,
+        patience: 100
+      });
+      SoundFX.door();
+    }
+
+    function saveGame() {
+      try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(gameState));
+      } catch (e) {}
+    }
+
+    function loadGame() {
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+          gameState = {
+            ...gameState,
+            ...parsed,
+            todayStats: { ...gameState.todayStats, ...(parsed.todayStats || {}) },
+            inventory: { ...createDefaultInventory(), ...(parsed.inventory || {}) }
+          };
+        }
+      } catch (e) {}
+    }
+
+    function resetGameConfirm() {
+      localStorage.removeItem(SAVE_KEY);
+      location.reload();
+    }
+
+    /**
+     * =========================================================================
+     * 5. ENGINE RENDERING 2.5D CITAMPI-STYLE REALISTIS
+     * =========================================================================
+     */
+    const canvas = document.getElementById('warungCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const WORLD = {
+      width: 960,
+      height: 580,
+      warungRect: { x: 180, y: 80, w: 600, h: 300 },
+      roadY: 446,
+      roadH: 96
+    };
+
+    const cam25D = {
+      x: 480,
+      y: 295,
+      zoom: 1.0
+    };
+
+    const clouds = [
+      { x: 110, y: 45, scale: 1.0, speed: 12 },
+      { x: 460, y: 38, scale: 1.2, speed: 9 },
+      { x: 810, y: 50, scale: 0.9, speed: 14 }
+    ];
+
+    const rainDrops = Array.from({ length: 75 }, () => ({
+      x: Math.random() * WORLD.width,
+      y: Math.random() * WORLD.height,
+      len: 10 + Math.random() * 10,
+      speed: 360 + Math.random() * 140
+    }));
+
+    function drawRoundRect(x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.arcTo(x + w, y, x + w, y + h, radius);
+      ctx.arcTo(x + w, y + h, x, y + h, radius);
+      ctx.arcTo(x, y + h, x, y, radius);
+      ctx.arcTo(x, y, x + w, y, radius);
+      ctx.closePath();
+    }
+
+    function drawCitampiTree(x, y, type = 'mango') {
+      ctx.save();
+      const shGrad = ctx.createRadialGradient(x + 12, y + 8, 4, x + 12, y + 8, 44);
+      shGrad.addColorStop(0, 'rgba(15, 23, 42, 0.34)');
+      shGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+      ctx.fillStyle = shGrad;
+      ctx.beginPath();
+      ctx.ellipse(x + 12, y + 8, 44, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (type === 'banana') {
+        const trunkGrad = ctx.createLinearGradient(x - 7, y, x + 7, y);
+        trunkGrad.addColorStop(0, '#365314');
+        trunkGrad.addColorStop(0.5, '#65a30d');
+        trunkGrad.addColorStop(1, '#1a2e05');
+        ctx.fillStyle = trunkGrad;
+        ctx.strokeStyle = '#1a2e05';
+        ctx.lineWidth = 2;
+        drawRoundRect(x - 7, y - 46, 14, 48, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        const leafAngles = [-2.45, -1.95, -1.25, -0.45, 0.15];
+        leafAngles.forEach((ang, idx) => {
+          ctx.save();
+          ctx.translate(x, y - 42);
+          ctx.rotate(ang);
+          const lGrad = ctx.createLinearGradient(0, -8, 52, 8);
+          lGrad.addColorStop(0, '#4d7c0f');
+          lGrad.addColorStop(0.5, idx % 2 === 0 ? '#84cc16' : '#65a30d');
+          lGrad.addColorStop(1, '#3f6212');
+          ctx.fillStyle = lGrad;
+          ctx.beginPath();
+          ctx.ellipse(28, 0, 30, 9.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#1a2e05';
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+          ctx.strokeStyle = '#bef264';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(4, 0);
+          ctx.lineTo(52, 0);
+          ctx.stroke();
+          ctx.restore();
+        });
+      } else {
+        const barkGrad = ctx.createLinearGradient(x - 11, y, x + 11, y);
+        barkGrad.addColorStop(0, '#451a03');
+        barkGrad.addColorStop(0.45, '#92400e');
+        barkGrad.addColorStop(1, '#291204');
+        ctx.fillStyle = barkGrad;
+        ctx.strokeStyle = '#291204';
+        ctx.lineWidth = 2;
+        drawRoundRect(x - 10, y - 48, 20, 50, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        const puffs = [
+          { dx: 0, dy: -56, r: 36, c1: '#22c55e', c2: '#14532d' },
+          { dx: -24, dy: -46, r: 25, c1: '#16a34a', c2: '#14532d' },
+          { dx: 24, dy: -46, r: 25, c1: '#15803d', c2: '#052e16' },
+          { dx: -8, dy: -68, r: 27, c1: '#4ade80', c2: '#15803d' },
+          { dx: 12, dy: -62, r: 21, c1: '#86efac', c2: '#16a34a' }
+        ];
+        puffs.forEach(p => {
+          const pGrad = ctx.createRadialGradient(x + p.dx - p.r * 0.3, y + p.dy - p.r * 0.3, 3, x + p.dx, y + p.dy, p.r);
+          pGrad.addColorStop(0, p.c1);
+          pGrad.addColorStop(1, p.c2);
+          ctx.fillStyle = pGrad;
+          ctx.beginPath();
+          ctx.arc(x + p.dx, y + p.dy, p.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#14532d';
+          ctx.lineWidth = 1.8;
+          ctx.stroke();
+        });
+      }
+      ctx.restore();
+    }
+
+    function drawStreetCart(x, y) {
+      ctx.save();
+      const shGrad = ctx.createRadialGradient(x + 42, y + 48, 6, x + 42, y + 48, 48);
+      shGrad.addColorStop(0, 'rgba(15, 23, 42, 0.35)');
+      shGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+      ctx.fillStyle = shGrad;
+      ctx.beginPath();
+      ctx.ellipse(x + 42, y + 48, 48, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const woodGrad = ctx.createLinearGradient(x, y + 12, x, y + 42);
+      woodGrad.addColorStop(0, '#d97706');
+      woodGrad.addColorStop(1, '#78350f');
+      ctx.fillStyle = woodGrad;
+      ctx.strokeStyle = '#291204';
+      ctx.lineWidth = 2.2;
+      drawRoundRect(x, y + 12, 84, 30, 5);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.85)';
+      drawRoundRect(x + 6, y - 10, 48, 22, 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + 12, y + 8);
+      ctx.lineTo(x + 24, y - 6);
+      ctx.stroke();
+
+      const roofGrad = ctx.createLinearGradient(x, y - 22, x, y - 10);
+      roofGrad.addColorStop(0, '#38bdf8');
+      roofGrad.addColorStop(1, '#0369a1');
+      ctx.fillStyle = roofGrad;
+      ctx.strokeStyle = '#0c4a6e';
+      ctx.lineWidth = 2;
+      drawRoundRect(x - 6, y - 22, 96, 12, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      [x + 22, x + 64].forEach(wx => {
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.arc(wx, y + 44, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#94a3b8';
+        ctx.beginPath();
+        ctx.arc(wx, y + 44, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    function drawChibi25DCharacter(charType, x, y, dir = 'down', walkFrame = 0, label = '', bubbleText = '', badgeColor = '#0f172a') {
+      ctx.save();
+      const stepPhase = Math.sin(walkFrame * 10);
+      const isMoving = Math.abs(stepPhase) > 0.12 && walkFrame > 0;
+      const bobY = isMoving ? Math.abs(stepPhase) * 3.5 : Math.sin(performance.now() / 420) * 1.1;
+
+      const footShadow = ctx.createRadialGradient(x, y + 2, 2, x, y + 2, 18);
+      footShadow.addColorStop(0, 'rgba(15, 23, 42, 0.42)');
+      footShadow.addColorStop(1, 'rgba(15, 23, 42, 0)');
+      ctx.fillStyle = footShadow;
+      ctx.beginPath();
+      ctx.ellipse(x, y + 2, 18, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      let skin = '#f3c69f';
+      let skinShadow = '#d99b6c';
+      let hair = '#111827';
+      let hairHighlight = '#334155';
+      let shirt = '#18181b';
+      let pants = '#18181b';
+      let shoe = '#e6b07e';
+      let longHair = false;
+      let ponytail = false;
+      let headphones = false;
+      let clipCol = null;
+
+      if (charType === 'ahmad') {
+        shirt = '#3f3f46'; pants = '#27272a'; shoe = '#09090b';
+      } else if (charType === 'bim_wing') {
+        shirt = '#1d4ed8'; pants = '#09090b'; shoe = '#09090b'; hairHighlight = '#3b82f6';
+      } else if (charType === 'om_heri') {
+        shirt = '#ffffff'; pants = '#78350f'; hair = '#4b5563';
+      } else if (charType === 'npc1') {
+        skin = '#fde6d8'; shirt = '#18181b'; pants = '#18181b'; shoe = '#f8fafc';
+        longHair = true; ponytail = true; headphones = true; clipCol = '#ffffff';
+      } else if (charType === 'npc2') {
+        skin = '#fde6d8'; shirt = '#f1f5f9'; pants = '#18181b'; shoe = '#f8fafc'; hairHighlight = '#cbd5e1';
+      } else if (charType === 'npc3') {
+        skin = '#fde6d8'; shirt = '#111827'; pants = '#111827'; shoe = '#f8fafc';
+      } else if (charType === 'npc4') {
+        skin = '#fde6d8'; hair = '#1e1b4b'; shirt = '#18181b'; pants = '#18181b'; shoe = '#e9d5ff';
+        headphones = true; clipCol = '#a855f7';
+      } else if (charType === 'npc5') {
+        skin = '#fde6d8'; shirt = '#18181b'; pants = '#2e1065'; shoe = '#f3e8ff';
+        longHair = true; clipCol = '#c084fc';
+      } else if (charType === 'npc6') {
+        skin = '#fde6d8'; shirt = '#18181b'; pants = '#18181b'; shoe = '#f8fafc';
+        longHair = true; clipCol = '#ffffff';
+      }
+
+      const drawY = y - bobY;
+      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = '#09090b';
+
+      if (longHair && dir !== 'up') {
+        ctx.fillStyle = hair;
+        drawRoundRect(x - 16, drawY - 46, 32, 34, 10);
+        ctx.fill();
+        ctx.stroke();
+      }
+      if (ponytail && dir !== 'up') {
+        ctx.fillStyle = hair;
+        drawRoundRect(x + (dir === 'left' ? 10 : -18), drawY - 48, 11, 28, 5);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x + (dir === 'left' ? 11 : -16), drawY - 48, 8, 5);
+      }
+
+      const leftLegOffset = isMoving ? stepPhase * 4 : 0;
+      const rightLegOffset = isMoving ? -stepPhase * 4 : 0;
+
+      ctx.fillStyle = pants;
+      drawRoundRect(x - 10, drawY - 14 + leftLegOffset * 0.4, 8, 12, 3);
+      ctx.fill();
+      ctx.stroke();
+      drawRoundRect(x + 2, drawY - 14 + rightLegOffset * 0.4, 8, 12, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = shoe;
+      ctx.fillRect(x - 10, drawY - 4 + leftLegOffset * 0.4, 8, 4);
+      ctx.fillRect(x + 2, drawY - 4 + rightLegOffset * 0.4, 8, 4);
+
+      if (charType === 'om_heri') {
+        ctx.fillStyle = '#78350f';
+        drawRoundRect(x - 11, drawY - 16, 22, 12, 3);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(x - 8, drawY - 14, 5, 8);
+        ctx.fillRect(x + 3, drawY - 14, 5, 8);
+      }
+
+      ctx.fillStyle = shirt;
+      drawRoundRect(x - 13, drawY - 29, 26, 17, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      if (charType === 'ahmad' && dir !== 'up') {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(x - 4, drawY - 28);
+        ctx.lineTo(x + 4, drawY - 28);
+        ctx.lineTo(x, drawY - 16);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#09090b';
+        ctx.fillRect(x - 1.5, drawY - 27, 3, 9);
+      } else if (charType === 'om_heri') {
+        ctx.fillStyle = '#7f1d1d';
+        ctx.beginPath();
+        ctx.moveTo(x - 11, drawY - 28);
+        ctx.lineTo(x - 5, drawY - 28);
+        ctx.lineTo(x + 12, drawY - 14);
+        ctx.lineTo(x + 6, drawY - 14);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (charType === 'bim_wing' && dir !== 'up') {
+        ctx.strokeStyle = '#93c5fd';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - 4, drawY - 26);
+        ctx.lineTo(x - 4, drawY - 19);
+        ctx.moveTo(x + 4, drawY - 26);
+        ctx.lineTo(x + 4, drawY - 19);
+        ctx.stroke();
+        ctx.strokeStyle = '#09090b';
+        ctx.lineWidth = 2.2;
+      }
+
+      if (headphones && dir !== 'up') {
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.arc(x - 9, drawY - 28, 4.5, 0, Math.PI * 2);
+        ctx.arc(x + 9, drawY - 28, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      const armSwing = isMoving ? stepPhase * 3.5 : 0;
+      ctx.fillStyle = charType === 'om_heri' ? skin : shirt;
+      drawRoundRect(x - 17, drawY - 28 - armSwing * 0.5, 6, 13, 3);
+      ctx.fill();
+      ctx.stroke();
+      drawRoundRect(x + 11, drawY - 28 + armSwing * 0.5, 6, 13, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = skin;
+      drawRoundRect(x - 16, drawY - 56, 32, 28, 11);
+      ctx.fill();
+
+      ctx.fillStyle = skinShadow;
+      ctx.beginPath();
+      ctx.roundRect(x - 14, drawY - 34, 28, 6, 4);
+      ctx.fill();
+
+      ctx.strokeStyle = '#09090b';
+      drawRoundRect(x - 16, drawY - 56, 32, 28, 11);
+      ctx.stroke();
+
+      if (dir === 'up') {
+        if (charType === 'om_heri') {
+          ctx.fillStyle = hair;
+          drawRoundRect(x - 16, drawY - 47, 32, 18, 6);
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = hair;
+          drawRoundRect(x - 17, drawY - 58, 34, longHair ? 42 : 30, 11);
+          ctx.fill();
+          ctx.stroke();
+        }
+      } else {
+        const eyeShiftX = dir === 'left' ? -4 : dir === 'right' ? 4 : 0;
+
+        if (charType === 'om_heri') {
+          ctx.fillStyle = hair;
+          ctx.fillRect(x - 17, drawY - 49, 5, 13);
+          ctx.fillRect(x + 12, drawY - 49, 5, 13);
+          ctx.strokeStyle = skinShadow;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(x - 6, drawY - 50);
+          ctx.lineTo(x + 6, drawY - 50);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = hair;
+          ctx.beginPath();
+          ctx.moveTo(x - 17, drawY - 44);
+          ctx.quadraticCurveTo(x - 18, drawY - 62, x, drawY - 60);
+          ctx.quadraticCurveTo(x + 18, drawY - 62, x + 17, drawY - 44);
+          ctx.quadraticCurveTo(x + 6, drawY - 50, x, drawY - 46);
+          ctx.quadraticCurveTo(x - 6, drawY - 50, x - 17, drawY - 44);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.strokeStyle = hairHighlight;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x - 9, drawY - 54);
+          ctx.lineTo(x - 3, drawY - 55);
+          ctx.moveTo(x + 4, drawY - 55);
+          ctx.lineTo(x + 10, drawY - 54);
+          ctx.stroke();
+
+          if (clipCol) {
+            ctx.strokeStyle = clipCol;
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.moveTo(x + 7 + eyeShiftX * 0.5, drawY - 49);
+            ctx.lineTo(x + 12 + eyeShiftX * 0.5, drawY - 45);
+            ctx.moveTo(x + 12 + eyeShiftX * 0.5, drawY - 49);
+            ctx.lineTo(x + 7 + eyeShiftX * 0.5, drawY - 45);
+            ctx.stroke();
+          }
+        }
+
+        ctx.fillStyle = '#09090b';
+        ctx.strokeStyle = '#09090b';
+        ctx.lineWidth = 2;
+        if (charType === 'ahmad') {
+          ctx.beginPath();
+          ctx.arc(x - 6 + eyeShiftX, drawY - 40, 3.2, Math.PI, 0);
+          ctx.arc(x + 6 + eyeShiftX, drawY - 40, 3.2, Math.PI, 0);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.arc(x - 6 + eyeShiftX, drawY - 41, 2.5, 0, Math.PI * 2);
+          ctx.arc(x + 6 + eyeShiftX, drawY - 41, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(x - 7 + eyeShiftX, drawY - 42.5, 1.5, 1.5);
+          ctx.fillRect(x + 5 + eyeShiftX, drawY - 42.5, 1.5, 1.5);
+        }
+
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.32)';
+        ctx.beginPath();
+        ctx.ellipse(x - 10 + eyeShiftX, drawY - 36, 3, 1.8, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + 10 + eyeShiftX, drawY - 36, 3, 1.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#09090b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x + eyeShiftX, drawY - 35, 4.2, 0.15 * Math.PI, 0.85 * Math.PI);
+        ctx.stroke();
+      }
+
+      if (label) {
+        ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+        const tw = ctx.measureText(label).width + 12;
+        ctx.fillStyle = badgeColor;
+        drawRoundRect(x - tw / 2, drawY - 75, tw, 15, 6);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, x, drawY - 64.5);
+      }
+
+      if (bubbleText) {
+        ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+        const bw = ctx.measureText(bubbleText).width + 14;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2;
+        drawRoundRect(x - bw / 2, drawY - 96, bw, 18, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#0f172a';
+        ctx.textAlign = 'center';
+        ctx.fillText(bubbleText, x, drawY - 83.5);
+      }
+
+      ctx.restore();
+    }
+
+    function render25DWorld() {
+      ctx.save();
+      ctx.clearRect(0, 0, WORLD.width, WORLD.height);
+
+      const targetCamX = introCutscene.active ? 480 : 480 + (player.x - 480) * 0.16;
+      const targetCamY = introCutscene.active ? (350 - introCutscene.progress * 55) : 295 + (player.y - 295) * 0.12;
+      const targetZoom = introCutscene.active ? (0.94 + introCutscene.progress * 0.08) : 1.0;
+      cam25D.x += (targetCamX - cam25D.x) * 0.12;
+      cam25D.y += (targetCamY - cam25D.y) * 0.12;
+      cam25D.zoom += (targetZoom - cam25D.zoom) * 0.12;
+
+      ctx.translate(WORLD.width / 2, WORLD.height / 2);
+      ctx.scale(cam25D.zoom, cam25D.zoom);
+      ctx.translate(-cam25D.x, -cam25D.y);
+
+      const isEvening = gameState.timeMinutes >= 17 * 60 + 30;
+
+      // 1. Latar Rumput Kampung Tropis Bertekstur Realistis
+      const grassGrad = ctx.createLinearGradient(0, 0, 0, WORLD.height);
+      grassGrad.addColorStop(0, '#4d7c0f');
+      grassGrad.addColorStop(0.5, '#3f6212');
+      grassGrad.addColorStop(1, '#365314');
+      ctx.fillStyle = grassGrad;
+      ctx.fillRect(-100, -100, WORLD.width + 200, WORLD.height + 200);
+
+      for (let gx = 20; gx < WORLD.width; gx += 48) {
+        for (let gy = 25; gy < 385; gy += 44) {
+          if (gx > 165 && gx < 795 && gy > 65 && gy < 395) continue;
+          ctx.strokeStyle = 'rgba(163, 230, 53, 0.35)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(gx, gy);
+          ctx.lineTo(gx - 3, gy - 6);
+          ctx.moveTo(gx + 3, gy);
+          ctx.lineTo(gx + 6, gy - 5);
+          ctx.stroke();
+          if ((gx + gy) % 96 === 0) {
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(gx + 10, gy - 3, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      clouds.forEach(cl => {
+        const clGrad = ctx.createRadialGradient(cl.x + 15, cl.y - 4, 4, cl.x + 15, cl.y, 45 * cl.scale);
+        clGrad.addColorStop(0, 'rgba(255, 255, 255, 0.36)');
+        clGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = clGrad;
+        ctx.beginPath();
+        ctx.arc(cl.x, cl.y, 28 * cl.scale, 0, Math.PI * 2);
+        ctx.arc(cl.x + 22 * cl.scale, cl.y - 4, 24 * cl.scale, 0, Math.PI * 2);
+        ctx.arc(cl.x + 42 * cl.scale, cl.y + 2, 20 * cl.scale, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 2. Trotoar Paving Block, Selokan Air Reflektif & Jalan Aspal Kampung
+      const paveGrad = ctx.createLinearGradient(0, 392, 0, 436);
+      paveGrad.addColorStop(0, '#f5f5f4');
+      paveGrad.addColorStop(1, '#d6d3d1');
+      ctx.fillStyle = paveGrad;
+      ctx.fillRect(-80, 392, WORLD.width + 160, 44);
+      ctx.strokeStyle = 'rgba(120, 113, 108, 0.45)';
+      ctx.lineWidth = 1.2;
+      for (let px = -60; px < WORLD.width + 80; px += 28) {
+        ctx.strokeRect(px, 392, 28, 22);
+        ctx.strokeRect(px + 14, 414, 28, 22);
+      }
+      for (let kx = -60; kx < WORLD.width + 80; kx += 40) {
+        ctx.fillStyle = (Math.floor(kx / 40) % 2 === 0) ? '#facc15' : '#1e293b';
+        ctx.fillRect(kx, 432, 40, 5);
+      }
+
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(-80, 437, WORLD.width + 160, 9);
+      const waterGrad = ctx.createLinearGradient(0, 439, 0, 444);
+      waterGrad.addColorStop(0, '#38bdf8');
+      waterGrad.addColorStop(1, '#0284c7');
+      ctx.fillStyle = waterGrad;
+      ctx.fillRect(-80, 439, WORLD.width + 160, 5);
+
+      const roadGrad = ctx.createLinearGradient(0, WORLD.roadY, 0, WORLD.roadY + WORLD.roadH);
+      roadGrad.addColorStop(0, '#334155');
+      roadGrad.addColorStop(0.45, '#1e293b');
+      roadGrad.addColorStop(1, '#0f172a');
+      ctx.fillStyle = roadGrad;
+      ctx.fillRect(-80, WORLD.roadY, WORLD.width + 160, WORLD.roadH);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+      for (let ax = 0; ax < WORLD.width; ax += 18) {
+        for (let ay = WORLD.roadY + 6; ay < WORLD.roadY + WORLD.roadH - 6; ay += 14) {
+          ctx.fillRect(ax + (ay % 7), ay, 2, 2);
+        }
+      }
+
+      ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
+      for (let mx = -40; mx < WORLD.width + 60; mx += 64) {
+        ctx.fillRect(mx, WORLD.roadY + WORLD.roadH / 2 - 3, 34, 6);
+      }
+      for (let zx = 432; zx <= 528; zx += 16) {
+        ctx.fillStyle = 'rgba(248, 250, 252, 0.82)';
+        ctx.fillRect(zx, WORLD.roadY + 12, 9, WORLD.roadH - 24);
+      }
+
+      // Pepohonan & Gerobak Jajanan khas Citampi Stories
+      drawCitampiTree(78, 155, 'mango');
+      drawCitampiTree(105, 340, 'banana');
+      drawCitampiTree(865, 160, 'banana');
+      drawCitampiTree(882, 345, 'mango');
+      drawStreetCart(45, 365);
+
+      // 3. Bangunan Utama Warung Josjis
+      const wr = WORLD.warungRect;
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.32)';
+      drawRoundRect(wr.x - 8, wr.y + 12, wr.w + 24, wr.h + 12, 14);
+      ctx.fill();
+
+      ctx.save();
+      drawRoundRect(wr.x, wr.y, wr.w, wr.h, 8);
+      ctx.clip();
+
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(wr.x, wr.y, wr.w, wr.h);
+
+      const tileSize = 36;
+      for (let ty = wr.y; ty < wr.y + wr.h; ty += tileSize) {
+        for (let tx = wr.x; tx < wr.x + wr.w; tx += tileSize) {
+          const isAlt = ((Math.floor((tx - wr.x) / tileSize) + Math.floor((ty - wr.y) / tileSize)) % 2) === 0;
+          ctx.fillStyle = isAlt ? '#fde68a' : '#fef9c3';
+          ctx.fillRect(tx, ty, tileSize, tileSize);
+          ctx.strokeStyle = 'rgba(146, 64, 14, 0.22)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(tx, ty, tileSize, tileSize);
+        }
+      }
+
+      ctx.fillStyle = '#991b1b';
+      ctx.strokeStyle = '#fef08a';
+      ctx.lineWidth = 1.5;
+      drawRoundRect(442, wr.y + wr.h - 32, 76, 20, 4);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fef08a';
+      ctx.font = 'bold 7.5px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('SELAMAT DATANG', 480, wr.y + wr.h - 19.5);
+
+      const sunFloorGrad = ctx.createLinearGradient(0, wr.y + wr.h - 105, 0, wr.y + wr.h);
+      sunFloorGrad.addColorStop(0, 'rgba(254, 249, 195, 0)');
+      sunFloorGrad.addColorStop(1, 'rgba(255, 255, 255, 0.48)');
+      ctx.fillStyle = sunFloorGrad;
+      ctx.fillRect(wr.x, wr.y + wr.h - 105, wr.w, 105);
+
+      const wallTopGrad = ctx.createLinearGradient(0, wr.y, 0, wr.y + 34);
+      wallTopGrad.addColorStop(0, '#fef08a');
+      wallTopGrad.addColorStop(1, '#fef9c3');
+      ctx.fillStyle = wallTopGrad;
+      ctx.fillRect(wr.x, wr.y, wr.w, 34);
+
+      const wallTileGrad = ctx.createLinearGradient(0, wr.y + 34, 0, wr.y + 50);
+      wallTileGrad.addColorStop(0, '#16a34a');
+      wallTileGrad.addColorStop(1, '#14532d');
+      ctx.fillStyle = wallTileGrad;
+      ctx.fillRect(wr.x, wr.y + 34, wr.w, 16);
+
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(wr.x, wr.y + 50);
+      ctx.lineTo(wr.x + wr.w, wr.y + 50);
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 2;
+      ctx.fillRect(wr.x + 36, wr.y + 8, 38, 24);
+      ctx.strokeRect(wr.x + 36, wr.y + 8, 38, 24);
+      ctx.fillStyle = '#15803d';
+      ctx.font = 'bold 7.5px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('KAS TERTIB', wr.x + 55, wr.y + 22);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(wr.x + wr.w - 48, wr.y + 20, 11, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(wr.x + wr.w - 48, wr.y + 20);
+      ctx.lineTo(wr.x + wr.w - 48, wr.y + 13);
+      ctx.moveTo(wr.x + wr.w - 48, wr.y + 20);
+      ctx.lineTo(wr.x + wr.w - 43, wr.y + 20);
+      ctx.stroke();
+
+      ctx.restore();
+
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 6;
+      drawRoundRect(wr.x, wr.y, wr.w, wr.h, 8);
+      ctx.stroke();
+
+      // 4. Furnitur 2.5D Realistis di Dalam Toko
+      const prodColors = {
+        beras: '#fef08a',
+        indomie: '#fb923c',
+        gorengan: '#f59e0b',
+        buku: '#38bdf8',
+        esteh: '#22d3ee',
+        sabun: '#f472b6'
+      };
+
+      RACK_SLOTS.forEach(rk => {
+        const rx = rk.x - 46;
+        const ry = rk.y - 26;
+        const rw = 92;
+        const rh = 44;
+        const isFridge = rk.prodId === 'esteh';
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.25)';
+        drawRoundRect(rx + 4, ry + 8, rw, rh, 7);
+        ctx.fill();
+
+        const bodyGrad = ctx.createLinearGradient(rx, ry, rx, ry + rh);
+        if (isFridge) {
+          bodyGrad.addColorStop(0, '#0ea5e9');
+          bodyGrad.addColorStop(1, '#0369a1');
+        } else {
+          bodyGrad.addColorStop(0, '#b45309');
+          bodyGrad.addColorStop(1, '#78350f');
+        }
+        ctx.fillStyle = bodyGrad;
+        ctx.strokeStyle = '#291204';
+        ctx.lineWidth = 2.2;
+        drawRoundRect(rx, ry, rw, rh, 7);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = isFridge ? '#e0f2fe' : '#f59e0b';
+        drawRoundRect(rx + 3, ry + 3, rw - 6, 22, 4);
+        ctx.fill();
+
+        const qty = getProductTotalQty(rk.prodId);
+        const itemBoxes = Math.min(6, Math.ceil(qty / 14));
+        for (let b = 0; b < itemBoxes; b++) {
+          const bx = rx + 10 + (b % 3) * 26;
+          const by = ry + 6 + Math.floor(b / 3) * 11;
+          ctx.fillStyle = prodColors[rk.prodId] || '#facc15';
+          ctx.strokeStyle = '#1e293b';
+          ctx.lineWidth = 1.4;
+          drawRoundRect(bx, by, 20, 10, 2.5);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+          ctx.fillRect(bx + 3, by + 2, 14, 3);
+        }
+
+        ctx.fillStyle = '#0f172a';
+        drawRoundRect(rx + 6, ry - 15, rw - 12, 16, 5);
+        ctx.fill();
+        ctx.fillStyle = '#fde047';
+        ctx.font = 'bold 9.5px "Plus Jakarta Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${rk.label.replace('Rak ', '')} (${qty})`, rk.x, ry - 4);
+
+        const carryQty = gameState.carryingRestockItems[rk.prodId] || 0;
+        if (carryQty > 0) {
+          const pulse = Math.sin(performance.now() / 160) * 3;
+          ctx.fillStyle = '#16a34a';
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          drawRoundRect(rk.x - 36, ry - 35 + pulse, 72, 18, 8);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.fillText(`+Taruh (${carryQty})`, rk.x, ry - 23 + pulse);
+        }
+      });
+
+      // Meja Kasir Utama 2.5D + Monitor POS
+      const cx = 415;
+      const cy = 282;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.26)';
+      drawRoundRect(cx + 5, cy + 8, 130, 44, 8);
+      ctx.fill();
+
+      const counterGrad = ctx.createLinearGradient(cx, cy, cx, cy + 42);
+      counterGrad.addColorStop(0, '#d97706');
+      counterGrad.addColorStop(1, '#78350f');
+      ctx.fillStyle = counterGrad;
+      ctx.strokeStyle = '#291204';
+      ctx.lineWidth = 2.4;
+      drawRoundRect(cx, cy, 130, 42, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fde68a';
+      drawRoundRect(cx + 4, cy + 4, 122, 18, 5);
+      ctx.fill();
+
+      ctx.fillStyle = '#0f172a';
+      drawRoundRect(cx + 14, cy - 11, 30, 21, 4);
+      ctx.fill();
+      ctx.fillStyle = '#34d399';
+      ctx.fillRect(cx + 17, cy - 8, 24, 12);
+
+      ctx.fillStyle = '#334155';
+      drawRoundRect(cx + 52, cy - 4, 24, 13, 3);
+      ctx.fill();
+
+      ctx.fillStyle = '#fef3c7';
+      ctx.font = 'bold 10px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('MEJA KASIR', cx + 76, cy + 33);
+
+      // Pojok Kanan: Tabungan, Ruang Restok, Buku Kas
+      ctx.fillStyle = '#0284c7';
+      ctx.strokeStyle = '#0c4a6e';
+      ctx.lineWidth = 2.5;
+      drawRoundRect(675, 118, 62, 42, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9.5px sans-serif';
+      ctx.fillText('🐷 TABUNGAN', 706, 143);
+
+      ctx.fillStyle = '#9a3412';
+      ctx.strokeStyle = '#431407';
+      drawRoundRect(668, 200, 76, 46, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fed7aa';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillText('RUANG RESTOK', 706, 238);
+
+      if (gameState.restockBoxReady) {
+        const bounce = Math.sin(performance.now() / 180) * 3;
+        ctx.fillStyle = '#eab308';
+        ctx.strokeStyle = '#713f12';
+        ctx.lineWidth = 2.5;
+        drawRoundRect(682, 194 + bounce, 48, 30, 5);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#422006';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText('📦 PAKET!', 706, 212 + bounce);
+      }
+
+      ctx.fillStyle = '#059669';
+      ctx.strokeStyle = '#064e3b';
+      drawRoundRect(675, 286, 62, 42, 8);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9.5px sans-serif';
+      ctx.fillText('📒 BUKU KAS', 706, 311);
+
+      // 5. Dinding Kaca Depan, Pintu Geser Otomatis & Papan BUKA/TUTUP
+      const frontY = wr.y + wr.h;
+      const nearDoor = Math.hypot(player.x - 480, player.y - frontY) < 75 ||
+        customers.some(c => Math.hypot(c.x - 480, c.y - frontY) < 70);
+      const targetDoorOpen = introCutscene.active ? introCutscene.doorOpenAmount : (nearDoor ? 1 : 0);
+      introCutscene.doorOpenAmount += (targetDoorOpen - introCutscene.doorOpenAmount) * 0.18;
+
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.55)';
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 3;
+      ctx.fillRect(wr.x, frontY - 8, 252, 12);
+      ctx.strokeRect(wr.x, frontY - 8, 252, 12);
+      ctx.fillRect(wr.x + 348, frontY - 8, 252, 12);
+      ctx.strokeRect(wr.x + 348, frontY - 8, 252, 12);
+
+      const slidePx = introCutscene.doorOpenAmount * 42;
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.72)';
+      ctx.strokeStyle = '#0369a1';
+      ctx.lineWidth = 2.5;
+      ctx.fillRect(432 - slidePx, frontY - 9, 48, 14);
+      ctx.strokeRect(432 - slidePx, frontY - 9, 48, 14);
+      ctx.fillRect(480 + slidePx, frontY - 9, 48, 14);
+      ctx.strokeRect(480 + slidePx, frontY - 9, 48, 14);
+
+      ctx.fillStyle = gameState.shopOpen ? '#16a34a' : '#dc2626';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      drawRoundRect(344, frontY - 24, 62, 22, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(gameState.shopOpen ? 'BUKA' : 'TUTUP', 375, frontY - 9.5);
+
+      if (!gameState.shopOpen && !introCutscene.active) {
+        const excBounce = Math.sin(performance.now() / 160) * 4;
+        ctx.fillStyle = '#facc15';
+        ctx.strokeStyle = '#713f12';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(375, frontY - 40 + excBounce, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#713f12';
+        ctx.font = 'bold 15px Fredoka, sans-serif';
+        ctx.fillText('!', 375, frontY - 35 + excBounce);
+      }
+
+      // 6. Y-Sorting Seluruh Karakter 2.5D
+      const renderables = [];
+
+      renderables.push({
+        y: player.y,
+        draw: () => {
+          drawChibi25DCharacter('bima', player.x, player.y, player.dir, player.walkFrame, 'Bima', '', '#0f172a');
+
+          if (!gameState.shopOpen && !introCutscene.active && gameState.initialBudgetChecked) {
+            const ang = Math.atan2((frontY - 24) - (player.y - 68), 375 - player.x);
+            const bounce = Math.sin(performance.now() / 150) * 4;
+            ctx.save();
+            ctx.translate(player.x, player.y - 92 + bounce);
+            ctx.rotate(ang);
+            ctx.fillStyle = '#facc15';
+            ctx.strokeStyle = '#713f12';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(16, 0);
+            ctx.lineTo(-8, -10);
+            ctx.lineTo(-3, 0);
+            ctx.lineTo(-8, 10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      });
+
+      if (specialVisitor) {
+        renderables.push({
+          y: specialVisitor.y,
+          draw: () => drawChibi25DCharacter(
+            specialVisitor.roleType,
+            specialVisitor.x,
+            specialVisitor.y,
+            specialVisitor.dir || 'down',
+            0,
+            specialVisitor.name,
+            '',
+            specialVisitor.roleType === 'om_heri' ? '#92400e' : specialVisitor.roleType === 'bim_wing' ? '#1d4ed8' : '#3f3f46'
+          )
+        });
+      }
+
+      customers.forEach(c => {
+        renderables.push({
+          y: c.y,
+          draw: () => {
+            const faceDir = c.state === 'leaving' ? 'down' : 'up';
+            const bubble = c.state === 'waiting'
+              ? `🧾 ${formatRp(c.totalBill)}`
+              : c.state === 'browsing'
+                ? '🛒 Memilih...'
+                : '';
+            drawChibi25DCharacter(c.profileId || 'npc1', c.x, c.y, faceDir, c.walkFrame, c.name.split(' ')[0], bubble, '#1e293b');
+          }
+        });
+      });
+
+      renderables.sort((a, b) => a.y - b.y);
+      renderables.forEach(r => r.draw());
+
+      // 7. Kanopi Atap Teras & Papan Nama Warung Josjis
+      const awningY = wr.y - 16;
+      const stripeW = 25;
+      for (let sx = wr.x - 8; sx < wr.x + wr.w + 8; sx += stripeW) {
+        const idx = Math.floor((sx - wr.x) / stripeW);
+        ctx.fillStyle = idx % 2 === 0 ? '#d97706' : '#fef3c7';
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(sx, awningY);
+        ctx.lineTo(sx + stripeW, awningY);
+        ctx.lineTo(sx + stripeW, awningY + 26);
+        ctx.arc(sx + stripeW / 2, awningY + 26, stripeW / 2, 0, Math.PI);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 3.5;
+      drawRoundRect(315, wr.y - 44, 330, 32, 10);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 16px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🏪 WARUNG JOSJIS', 480, wr.y - 23);
+
+      if (gameState.upgrades.includes('neon_banner')) {
+        ctx.fillStyle = '#dc2626';
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2;
+        drawRoundRect(205, frontY + 4, 128, 22, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText('🔥 HARGA HEMAT!', 269, frontY + 18);
+      }
+
+      // 8. Tiang Listrik Kampung & Kabel Melintang khas Citampi Stories
+      [155, 805].forEach(px => {
+        ctx.fillStyle = '#57534e';
+        ctx.strokeStyle = '#1c1917';
+        ctx.lineWidth = 2;
+        ctx.fillRect(px - 4, 285, 8, 152);
+        ctx.strokeRect(px - 4, 285, 8, 152);
+        ctx.fillStyle = '#1c1917';
+        ctx.fillRect(px - 14, 294, 28, 4);
+      });
+      ctx.strokeStyle = 'rgba(15, 23, 42, 0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(155, 296);
+      ctx.quadraticCurveTo(480, 328, 805, 296);
+      ctx.stroke();
+
+      // 9. Kendaraan Melintas di Jalan Aspal
+      vehicles.forEach(v => {
+        ctx.save();
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.36)';
+        ctx.beginPath();
+        ctx.ellipse(v.x, v.y + 18, 38, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const hexColor = '#' + v.color.toString(16).padStart(6, '0');
+        ctx.fillStyle = hexColor;
+        ctx.strokeStyle = '#09090b';
+        ctx.lineWidth = 2.2;
+        drawRoundRect(v.x - 34, v.y - 12, 68, 24, 7);
+        ctx.fill();
+        ctx.stroke();
+
+        const cabGrad = ctx.createLinearGradient(v.x - 18, v.y - 24, v.x + 18, v.y - 10);
+        cabGrad.addColorStop(0, '#bae6fd');
+        cabGrad.addColorStop(1, '#0284c7');
+        ctx.fillStyle = cabGrad;
+        drawRoundRect(v.x - 18, v.y - 24, 36, 14, 5);
+        ctx.fill();
+        ctx.stroke();
+
+        const frontX = v.speed > 0 ? v.x + 31 : v.x - 35;
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(frontX, v.y - 6, 4, 7);
+        if (isEvening) {
+          const beamGrad = ctx.createRadialGradient(frontX, v.y - 2, 2, frontX + (v.speed > 0 ? 34 : -34), v.y - 2, 42);
+          beamGrad.addColorStop(0, 'rgba(254, 240, 138, 0.55)');
+          beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
+          ctx.fillStyle = beamGrad;
+          ctx.beginPath();
+          ctx.arc(frontX + (v.speed > 0 ? 22 : -22), v.y - 2, 36, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        [v.x - 18, v.x + 18].forEach(wx => {
+          ctx.fillStyle = '#09090b';
+          ctx.beginPath();
+          ctx.arc(wx, v.y + 13, 7.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#cbd5e1';
+          ctx.beginPath();
+          ctx.arc(wx, v.y + 13, 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.restore();
+      });
+
+      // 10. Partikel Teks Melayang
+      floatingParticles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+        ctx.font = 'bold 14px Fredoka, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 3.5;
+        ctx.strokeText(p.text, p.x, p.y);
+        ctx.fillStyle = p.color;
+        ctx.fillText(p.text, p.x, p.y);
+        ctx.restore();
+      });
+
+      // 11. Efek Cuaca Hujan & Pencahayaan Sore/Malam
+      if (gameState.weather === 'rainy') {
+        ctx.strokeStyle = 'rgba(186, 230, 253, 0.65)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        rainDrops.forEach(r => {
+          ctx.moveTo(r.x, r.y);
+          ctx.lineTo(r.x - 4, r.y + r.len);
+        });
+        ctx.stroke();
+      }
+
+      if (isEvening) {
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.34)';
+        ctx.fillRect(-100, -100, WORLD.width + 200, WORLD.height + 200);
+        const lampGlow = ctx.createRadialGradient(480, 220, 20, 480, 220, 290);
+        lampGlow.addColorStop(0, 'rgba(254, 240, 138, 0.35)');
+        lampGlow.addColorStop(1, 'rgba(254, 240, 138, 0)');
+        ctx.fillStyle = lampGlow;
+        ctx.fillRect(wr.x, wr.y, wr.w, wr.h);
+      }
+
+      ctx.restore();
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      SoundFX.ensureBGM();
+      const rect = canvas.getBoundingClientRect();
+      const sx = (e.clientX - rect.left) * (WORLD.width / rect.width);
+      const sy = (e.clientY - rect.top) * (WORLD.height / rect.height);
+      const wx = (sx - WORLD.width / 2) / cam25D.zoom + cam25D.x;
+      const wy = (sy - WORLD.height / 2) / cam25D.zoom + cam25D.y;
+
+      const clickedZone = ZONES.find(z => Math.hypot(wx - z.x, wy - z.y) <= z.r + 16);
+      if (clickedZone) {
+        player.targetX = clickedZone.x;
+        player.targetY = Math.min(350, Math.max(135, clickedZone.y));
+        player.pendingZone = clickedZone;
+        SoundFX.pop();
+        return;
+      }
+
+      const wr = WORLD.warungRect;
+      if (wx >= wr.x + 28 && wx <= wr.x + wr.w - 28 && wy >= wr.y + 52 && wy <= wr.y + wr.h - 20) {
+        player.targetX = wx;
+        player.targetY = wy;
+        player.pendingZone = null;
+      }
+    });
+
+    function resizeCanvas() {
+      const container = document.getElementById('game-container');
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = WORLD.width * dpr;
+      canvas.height = WORLD.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (container) {
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+      }
+    }
+
+    let lastTimestamp = 0;
+    let spawnTimer = 3.0;
+    let isPausedByModal = false;
+
+    function gameLoop(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dt = Math.min(0.05, (timestamp - lastTimestamp) / 1000);
+      lastTimestamp = timestamp;
+
+      updateGame(dt);
+      render25DWorld();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    /**
+     * =========================================================================
+     * 7. LOOP SIMULASI & LOGIKA UPDATE GAME
+     * =========================================================================
+     */
+    function updateGame(dt) {
+      if (introCutscene.active) {
+        introCutscene.progress = Math.min(1, introCutscene.progress + dt * 0.55);
+        introCutscene.doorOpenAmount = Math.min(1, introCutscene.progress * 2.2);
+        player.y = 425 - introCutscene.progress * 155;
+        player.dir = 'up';
+        player.walkFrame += dt * 1.4;
+        if (introCutscene.progress >= 1) {
+          introCutscene.active = false;
+          player.dir = 'down';
+          onIntroCutsceneFinished();
+        }
+        return;
+      }
+
+      if (isPausedByModal) return;
+
+      gameState.timeMinutes += dt * 2.5;
+      if (gameState.timeMinutes >= 20 * 60) {
+        openEndOfDayReport();
+        return;
+      }
+
+      if (!gameState.eventTriggeredToday && gameState.timeMinutes >= 12 * 60 + 30 && gameState.day >= 2) {
+        gameState.eventTriggeredToday = true;
+        triggerRandomDailyEvent();
+      }
+
+      if (gameState.bimWingPromoTimer > 0) {
+        gameState.bimWingPromoTimer = Math.max(0, gameState.bimWingPromoTimer - dt);
+        if (gameState.bimWingPromoTimer === 0) {
+          document.getElementById('promo-banner').classList.add('hidden');
+          if (specialVisitor && specialVisitor.roleType === 'bim_wing') specialVisitor = null;
+        }
+      }
+
+      // Pergerakan Bima
+      let vx = analogInput.x;
+      let vy = analogInput.y;
+      if (keys['ArrowUp'] || keys['w'] || keys['W']) vy -= 1;
+      if (keys['ArrowDown'] || keys['s'] || keys['S']) vy += 1;
+      if (keys['ArrowLeft'] || keys['a'] || keys['A']) vx -= 1;
+      if (keys['ArrowRight'] || keys['d'] || keys['D']) vx += 1;
+
+      const currentSpeed = player.isSprinting ? player.speed * 1.65 : player.speed;
+
+      if (Math.hypot(vx, vy) > 0.08) {
+        player.targetX = null;
+        player.targetY = null;
+        player.pendingZone = null;
+        const len = Math.hypot(vx, vy);
+        const normX = len > 1 ? vx / len : vx;
+        const normY = len > 1 ? vy / len : vy;
+        player.x += normX * currentSpeed * dt;
+        player.y += normY * currentSpeed * dt;
+        player.walkFrame += dt * (player.isSprinting ? 1.5 : 1.0);
+        if (Math.abs(normX) > Math.abs(normY)) player.dir = normX < 0 ? 'left' : 'right';
+        else player.dir = normY < 0 ? 'up' : 'down';
+      } else if (player.targetX !== null && player.targetY !== null) {
+        const dx = player.targetX - player.x;
+        const dy = player.targetY - player.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 5) {
+          player.x += (dx / dist) * currentSpeed * dt;
+          player.y += (dy / dist) * currentSpeed * dt;
+          player.walkFrame += dt * (player.isSprinting ? 1.5 : 1.0);
+          if (Math.abs(dx) > Math.abs(dy)) player.dir = dx < 0 ? 'left' : 'right';
+          else player.dir = dy < 0 ? 'up' : 'down';
+        } else {
+          player.targetX = null;
+          player.targetY = null;
+          if (player.pendingZone) {
+            const z = player.pendingZone;
+            player.pendingZone = null;
+            z.action();
+          }
+        }
+      }
+
+      const wr = WORLD.warungRect;
+      player.x = Math.max(wr.x + 28, Math.min(wr.x + wr.w - 28, player.x));
+      player.y = Math.max(wr.y + 52, Math.min(wr.y + wr.h - 24, player.y));
+
+      const nearZone = ZONES.find(z => Math.hypot(player.x - z.x, player.y - z.y) <= z.r);
+      const interactBtn = document.getElementById('interaction-btn');
+      if (nearZone) {
+        document.getElementById('interaction-icon').textContent = nearZone.icon;
+        document.getElementById('interaction-label').textContent = nearZone.label;
+        interactBtn.classList.remove('opacity-75');
+      } else {
+        document.getElementById('interaction-icon').textContent = '👉';
+        document.getElementById('interaction-label').textContent = 'Interaksi';
+        interactBtn.classList.add('opacity-75');
+      }
+
+      // Timer Kurir Restok
+      if (gameState.restockOrderTimer > 0) {
+        gameState.restockOrderTimer = Math.max(0, gameState.restockOrderTimer - dt);
+        updatePhoneOrderUI();
+        if (gameState.restockOrderTimer === 0) {
+          gameState.restockBoxReady = true;
+          document.getElementById('hp-notif-badge').classList.remove('hidden');
+          SoundFX.bell();
+          showToast('📱 Ting! Paket restok sudah tiba di Ruang Restok!', 'success');
+          saveGame();
+        }
+      }
+
+      // Spawn Customer
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) {
+        const nearCashier = Math.hypot(player.x - 480, player.y - 315) < 130;
+        if (gameState.shopOpen && nearCashier) {
+          spawnCustomer();
+        }
+        const repFactor = Math.max(0.45, 4.3 - gameState.reputation * 0.5);
+        const bannerFactor = gameState.upgrades.includes('neon_banner') ? 0.78 : 1.0;
+        const bimWingFactor = gameState.bimWingPromoTimer > 0 ? 0.42 : 1.0;
+        spawnTimer = (2.8 + Math.random() * 1.8) * repFactor * bannerFactor * bimWingFactor;
+      }
+
+      // Update Pelanggan
+      const waitingList = customers.filter(c => c.state === 'waiting' || c.state === 'walking_cashier');
+      for (let i = customers.length - 1; i >= 0; i--) {
+        const c = customers[i];
+
+        if (c.state === 'browsing') {
+          const wp = c.waypoints[0];
+          if (!wp) {
+            c.state = 'walking_cashier';
+          } else {
+            const dx = wp.x - c.x;
+            const dy = wp.y - c.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist > 5) {
+              c.x += (dx / dist) * 110 * dt;
+              c.y += (dy / dist) * 110 * dt;
+              c.walkFrame += dt;
+            } else {
+              c.browsePause -= dt;
+              if (c.browsePause <= 0) {
+                spawnFloatingText(c.x, c.y - 32, `+1 ${wp.icon}`, '#38bdf8');
+                c.waypoints.shift();
+                c.browsePause = 0.65;
+                if (c.waypoints.length === 0) {
+                  c.state = 'walking_cashier';
+                }
+              }
+            }
+          }
+        } else if (c.state === 'walking_cashier') {
+          const qIdx = Math.max(0, waitingList.indexOf(c));
+          const tx = 480 + qIdx * 46;
+          const ty = 355;
+          const dx = tx - c.x;
+          const dy = ty - c.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist > 4) {
+            c.x += (dx / dist) * 115 * dt;
+            c.y += (dy / dist) * 115 * dt;
+            c.walkFrame += dt;
+          } else {
+            c.state = 'waiting';
+            updateCashierBadge();
+          }
+        } else if (c.state === 'waiting') {
+          const qIdx = Math.max(0, waitingList.indexOf(c));
+          c.x += ((480 + qIdx * 46) - c.x) * 0.15;
+          const drainRate = qIdx === 0 ? 2.5 : 1.4;
+          c.patience -= drainRate * dt;
+          if (c.patience <= 0) {
+            c.state = 'leaving';
+            c.targetX = 480;
+            c.targetY = 445;
+            gameState.reputation = Math.max(1.0, +(gameState.reputation - 0.15).toFixed(2));
+            spawnFloatingText(c.x, c.y - 35, '😠 Kelamaan antre!', '#f87171');
+            SoundFX.error();
+          }
+        } else if (c.state === 'leaving') {
+          const exitDoorX = 480;
+          const exitDoorY = 445;
+          if (c.y < exitDoorY - 6) {
+            const dx = exitDoorX - c.x;
+            const dy = exitDoorY - c.y;
+            const dist = Math.hypot(dx, dy);
+            c.x += (dx / dist) * 125 * dt;
+            c.y += (dy / dist) * 125 * dt;
+            c.walkFrame += dt;
+          } else {
+            c.x += 145 * dt;
+            c.walkFrame += dt;
+            if (c.x > WORLD.width + 45) {
+              customers.splice(i, 1);
+              updateCashierBadge();
+            }
+          }
+        }
+      }
+
+      // Kendaraan di Jalan Aspal
+      vehicles.forEach(v => {
+        v.x += v.speed * dt;
+        if (v.speed > 0 && v.x > WORLD.width + 70) v.x = -70;
+        if (v.speed < 0 && v.x < -70) v.x = WORLD.width + 70;
+      });
+
+      // Awan, Hujan & Partikel Teks
+      clouds.forEach(cl => {
+        cl.x += cl.speed * dt;
+        if (cl.x > WORLD.width + 80) cl.x = -80;
+      });
+      if (gameState.weather === 'rainy') {
+        rainDrops.forEach(r => {
+          r.y += r.speed * dt;
+          r.x -= 90 * dt;
+          if (r.y > WORLD.height) {
+            r.y = -15;
+            r.x = Math.random() * WORLD.width;
+          }
+        });
+      }
+      for (let i = floatingParticles.length - 1; i >= 0; i--) {
+        const p = floatingParticles[i];
+        p.y += p.vy * dt;
+        p.life -= dt;
+        if (p.life <= 0) floatingParticles.splice(i, 1);
+      }
+
+      updateHUDClock();
+    }
+
+    /**
+     * =========================================================================
+     * 8. MINI-GAME KASIR & TRANSAKSI PENJUALAN
+     * =========================================================================
+     */
+    function updateCashierBadge() {
+      const waitingCount = customers.filter(c => c.state === 'waiting').length;
+      const badge = document.getElementById('cashier-badge');
+      if (waitingCount > 0) {
+        badge.textContent = waitingCount;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function triggerCashierAction() {
+      if (!gameState.shopOpen) {
+        showToast('Balik papan TUTUP menjadi BUKA di kaca depan dulu ya!', 'info');
+        return;
+      }
+
+      const waitingCust = customers.find(c => c.state === 'waiting');
+      if (!waitingCust) {
+        const browsingCust = customers.find(c => c.state === 'browsing' || c.state === 'walking_cashier');
+        if (browsingCust) {
+          showToast('Pelanggan sedang memilih produk di rak, tunggu menuju kasir...', 'info');
+        } else {
+          showToast('Tunggu di meja kasir sebentar, pelanggan akan segera masuk!', 'info');
+        }
+        return;
+      }
+
+      activeCustomer = waitingCust;
+      activeCustomer.state = 'waiting';
+
+      document.getElementById('cashier-cust-name').textContent = `Pelanggan: ${activeCustomer.name}`;
+      document.getElementById('cashier-total-bill').textContent = formatRp(activeCustomer.totalBill);
+
+      const listEl = document.getElementById('cashier-items-list');
+      listEl.innerHTML = activeCustomer.cart.map(item => `
+        <div class="flex justify-between items-center bg-amber-50/80 px-2.5 py-1.5 rounded-xl border border-amber-200">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">${item.icon}</span>
+            <span class="font-bold text-slate-800">${item.name}</span>
+            <span class="text-xs font-extrabold bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded-md">x${item.qty}</span>
+          </div>
+          <span class="font-bold text-slate-700">${formatRp(item.qty * item.unitPrice)}</span>
+        </div>
+      `).join('');
+
+      const correctBill = activeCustomer.totalBill;
+      const distractors = [
+        correctBill + 2000,
+        Math.max(1000, correctBill - 1500),
+        correctBill + 5000
+      ];
+      const options = [
+        { amount: correctBill, isCorrect: true },
+        ...distractors.map(amt => ({ amount: amt, isCorrect: false }))
+      ].sort(() => Math.random() - 0.5);
+
+      const choicesGrid = document.getElementById('cashier-number-choices');
+      choicesGrid.innerHTML = options.map((opt, idx) => `
+        <button
+          onclick="selectCustomerPaymentNumber(${opt.amount}, ${opt.isCorrect})"
+          class="btn-rpg ${opt.isCorrect ? 'bg-emerald-500 border-emerald-700 text-white' : 'bg-slate-200 border-slate-400 text-slate-800'} font-rpg font-bold py-3 px-3 rounded-2xl text-sm sm:text-base shadow"
+        >
+          #${idx + 1} • ${formatRp(opt.amount)}
+        </button>
+      `).join('');
+
+      openModal('modal-cashier');
+    }
+
+    function selectCustomerPaymentNumber(chosenAmount, isCorrect) {
+      if (!activeCustomer) return;
+
+      if (!isCorrect) {
+        SoundFX.error();
+        showToast(`Nomor salah! Pilih tombol hijau sesuai total tagihan ${formatRp(activeCustomer.totalBill)}.`, 'error');
+        return;
+      }
+
+      let transactionCogs = 0;
+      activeCustomer.cart.forEach(item => {
+        let remainToDeduct = item.qty;
+        const batches = gameState.inventory[item.id].batches;
+        while (remainToDeduct > 0 && batches.length > 0) {
+          const b = batches[0];
+          const take = Math.min(b.qty, remainToDeduct);
+          transactionCogs += take * b.costPerUnit;
+          b.qty -= take;
+          remainToDeduct -= take;
+          if (b.qty <= 0) batches.shift();
+        }
+      });
+
+      gameState.businessCash += activeCustomer.totalBill;
+      gameState.todayStats.revenue += activeCustomer.totalBill;
+      gameState.todayStats.cogs += transactionCogs;
+      gameState.todayStats.customersServed += 1;
+      gameState.reputation = Math.min(5.0, +(gameState.reputation + 0.12).toFixed(2));
+      gameState.energy = Math.max(10, gameState.energy - 2);
+
+      const itemSummary = activeCustomer.cart.map(c => `${c.qty}x ${c.name}`).join(', ');
+      addLog(`Terjual ke ${activeCustomer.name} (${itemSummary})`, activeCustomer.totalBill, 'in');
+
+      spawnFloatingText(480, 290, `+${formatRp(activeCustomer.totalBill)} 🪙`, '#4ade80');
+      SoundFX.coin();
+
+      const servedCustomerName = activeCustomer.name;
+      activeCustomer.state = 'leaving';
+      activeCustomer.targetX = 480;
+      activeCustomer.targetY = 445;
+      activeCustomer = null;
+
+      closeModal('modal-cashier');
+      updateCashierBadge();
+      updateAllUI();
+      saveGame();
+      showToast(`Pembayaran ${servedCustomerName} berhasil! Barang terjual.`, 'success');
+
+      if (gameState.day === 1 && gameState.todayStats.customersServed === 1 && specialVisitor && specialVisitor.roleType === 'om_heri') {
+        setTimeout(() => {
+          startVNDialog([
+            {
+              speaker: 'Om Heri',
+              charId: 'om_heri',
+              role: 'Mentor & Tetangga Senior',
+              text: `Bagus Bima! Kamu sudah paham alur jualannya: buka tanda toko, layani di kasir, pilih nomor pembayaran hijau, dan pelanggan puas keluar toko.`
+            },
+            {
+              speaker: 'Om Heri',
+              charId: 'om_heri',
+              role: 'Mentor & Tetangga Senior',
+              text: 'Kalau stok menipis, buka HP-mu, klik logo keranjang untuk pesan restok paket, tunggu kurir datang, lalu ambil di Ruang Restok dan isi rak satu per satu!'
+            }
+          ], () => {
+            specialVisitor = null;
+          });
+        }, 450);
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 9. MEKANIK PAPAN BUKA/TUTUP & RESTOK VIA HP -> RUANG RESTOK -> RAK
+     * =========================================================================
+     */
+    function toggleShopOpenSign() {
+      gameState.shopOpen = !gameState.shopOpen;
+      SoundFX.door();
+      if (gameState.shopOpen) {
+        showToast('Papan dibalik ke BUKA! Menuju meja kasir untuk menyambut pembeli.', 'success');
+        spawnTimer = 2.0;
+      } else {
+        showToast('Papan toko dibalik ke TUTUP.', 'info');
+      }
+      saveGame();
+    }
+
+    const RESTOCK_BUNDLE_QTY = 10;
+
+    function getRestockBundleTotalCost() {
+      return PRODUCTS_MASTER.reduce((sum, p) => {
+        return sum + gameState.inventory[p.id].todayWholesaleCost * RESTOCK_BUNDLE_QTY;
+      }, 0);
+    }
+
+    function openPhoneModal() {
+      document.getElementById('hp-notif-badge').classList.add('hidden');
+      document.getElementById('phone-clock-display').textContent = document.getElementById('hud-clock').textContent;
+      document.getElementById('phone-cash-info').textContent = `Kas: ${formatRp(gameState.businessCash)}`;
+
+      const listEl = document.getElementById('phone-restock-bundle-list');
+      listEl.innerHTML = PRODUCTS_MASTER.map(p => {
+        const unitCost = gameState.inventory[p.id].todayWholesaleCost;
+        return `
+          <div class="flex justify-between items-center bg-white px-2.5 py-1 rounded-lg border border-amber-200">
+            <span>${p.icon} <b>${p.name}</b> (+${RESTOCK_BUNDLE_QTY})</span>
+            <span class="font-bold text-slate-700">${formatRp(unitCost * RESTOCK_BUNDLE_QTY)}</span>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('phone-bundle-total').textContent = formatRp(getRestockBundleTotalCost());
+      updatePhoneOrderUI();
+      openModal('modal-phone');
+    }
+
+    function openPhoneCartApp() {
+      SoundFX.pop();
+      showToast('Aplikasi Keranjang Grosir siap digunakan!', 'info');
+    }
+
+    function updatePhoneOrderUI() {
+      const area = document.getElementById('phone-order-action-area');
+      if (!area) return;
+
+      if (gameState.restockOrderTimer > 0) {
+        const secs = Math.ceil(gameState.restockOrderTimer);
+        area.innerHTML = `
+          <div class="bg-sky-100 border-2 border-sky-400 text-sky-950 rounded-xl p-2.5 text-center text-xs font-bold">
+            🚚 Kurir sedang mengantar paket restok...<br/>
+            <span class="font-rpg text-base text-sky-700">Tiba dalam ${secs} detik</span>
+          </div>
+        `;
+      } else if (gameState.restockBoxReady) {
+        area.innerHTML = `
+          <div class="bg-emerald-100 border-2 border-emerald-500 text-emerald-950 rounded-xl p-2.5 text-center text-xs font-bold">
+            📦 Paket Restok Sudah Tiba di Ruang Restok!<br/>
+            Tutup HP lalu jalan ke Ruang Restok untuk mengambilnya.
+          </div>
+        `;
+      } else {
+        area.innerHTML = `
+          <button onclick="orderRestockBundle()" class="btn-rpg w-full bg-emerald-500 border-emerald-700 text-white font-rpg font-bold py-2.5 rounded-xl text-sm shadow">
+            🛍️ Beli Restok Paket (${formatRp(getRestockBundleTotalCost())})
+          </button>
+        `;
+      }
+    }
+
+    function orderRestockBundle() {
+      if (gameState.restockOrderTimer > 0 || gameState.restockBoxReady) {
+        showToast('Masih ada pesanan restok yang sedang diproses!', 'info');
+        return;
+      }
+
+      const totalCost = getRestockBundleTotalCost();
+      const totalItemsToAdd = PRODUCTS_MASTER.length * RESTOCK_BUNDLE_QTY;
+
+      if (getTotalStockCount() + totalItemsToAdd > getMaxStockCapacity()) {
+        SoundFX.error();
+        showToast('Kapasitas rak toko belum cukup untuk paket restok penuh!', 'error');
+        return;
+      }
+
+      if (gameState.businessCash < totalCost) {
+        SoundFX.error();
+        showToast('Kas Usaha tidak cukup untuk membeli paket restok!', 'error');
+        return;
+      }
+
+      gameState.businessCash -= totalCost;
+      gameState.restockOrderTimer = 60;
+      addLog('Pesan Paket Restok via Aplikasi Keranjang HP', -totalCost, 'out');
+      SoundFX.buy();
+      updatePhoneOrderUI();
+      updateAllUI();
+      saveGame();
+      showToast('Pesanan restok dikirim! Tunggu ±1 menit hingga notifikasi HP berbunyi.', 'success');
+    }
+
+    function interactRestockRoom() {
+      if (gameState.restockOrderTimer > 0) {
+        showToast(`Kurir masih di jalan (${Math.ceil(gameState.restockOrderTimer)} detik lagi)...`, 'info');
+        return;
+      }
+
+      if (!gameState.restockBoxReady) {
+        const remainingToPlace = Object.values(gameState.carryingRestockItems).reduce((a, b) => a + b, 0);
+        if (remainingToPlace > 0) {
+          showToast('Kamu sudah mengambil kardus restok! Taruh ke masing-masing rak satu per satu.', 'info');
+        } else {
+          showToast('Ruang Restok kosong. Buka HP -> Keranjang untuk pesan restok dulu!', 'info');
+        }
+        return;
+      }
+
+      gameState.restockBoxReady = false;
+      document.getElementById('hp-notif-badge').classList.add('hidden');
+      PRODUCTS_MASTER.forEach(p => {
+        gameState.carryingRestockItems[p.id] = (gameState.carryingRestockItems[p.id] || 0) + RESTOCK_BUNDLE_QTY;
+      });
+      SoundFX.buy();
+      saveGame();
+      showToast('📦 Kardus restok diambil! Sekarang datangi tiap rak untuk mengisi stok satu per satu.', 'success');
+    }
+
+    function interactSingleRack(rack) {
+      const carryQty = gameState.carryingRestockItems[rack.prodId] || 0;
+      const prod = PRODUCTS_MASTER.find(p => p.id === rack.prodId);
+
+      if (carryQty <= 0) {
+        showToast(`${rack.label}: Stok saat ini ${getProductTotalQty(rack.prodId)} pcs. Tidak ada restok yang dibawa untuk rak ini.`, 'info');
+        return;
+      }
+
+      const inv = gameState.inventory[rack.prodId];
+      const bonusShelf = gameState.upgrades.includes('fridge') && (prod.category === 'minuman' || prod.category === 'sembako') ? 2 : 0;
+      inv.batches.push({
+        qty: carryQty,
+        costPerUnit: inv.todayWholesaleCost,
+        daysLeft: prod.shelfLife + bonusShelf
+      });
+      delete gameState.carryingRestockItems[rack.prodId];
+
+      SoundFX.coin();
+      spawnFloatingText(rack.x, rack.y - 20, `+${carryQty} ${prod.icon}`, '#4ade80');
+      updateAllUI();
+      saveGame();
+
+      const leftCount = Object.keys(gameState.carryingRestockItems).length;
+      if (leftCount === 0) {
+        showToast(`✅ Semua rak telah selesai direstok!`, 'success');
+      } else {
+        showToast(`${rack.label} terisi +${carryQty}! Sisa ${leftCount} rak lagi untuk direstok.`, 'success');
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 10. SISTEM DIALOG VISUAL NOVEL, TUTORIAL OM HERI & EVENT TOKOH
+     * =========================================================================
+     */
+    let vnQueue = [];
+    let vnIndex = 0;
+    let vnOnComplete = null;
+
+    function startVNDialog(slides, onComplete = null) {
+      vnQueue = slides;
+      vnIndex = 0;
+      vnOnComplete = onComplete;
+      isPausedByModal = true;
+      renderVNCurrentSlide();
+      document.getElementById('vn-dialog-overlay').classList.remove('hidden');
+      SoundFX.pop();
+    }
+
+    function renderVNCurrentSlide() {
+      const slide = vnQueue[vnIndex];
+      if (!slide) return;
+      const charInfo = CHARACTERS_INFO[slide.charId] || CHARACTERS_INFO.bima;
+
+      document.getElementById('vn-avatar-svg').innerHTML = getCharacterPortraitSVG(slide.charId);
+      document.getElementById('vn-speaker-name').textContent = slide.speaker || charInfo.name;
+      const badgeEl = document.getElementById('vn-role-badge');
+      badgeEl.textContent = slide.role || charInfo.role;
+      badgeEl.className = `mt-2 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full text-center ${charInfo.badgeColor}`;
+
+      document.getElementById('vn-dialog-text').textContent = slide.text;
+      document.getElementById('vn-step-indicator').textContent = `${vnIndex + 1} / ${vnQueue.length}`;
+      document.getElementById('vn-next-btn').textContent = vnIndex === vnQueue.length - 1 ? 'Mulai! ✅' : 'Lanjut ▶';
+    }
+
+    function advanceVNDialog() {
+      SoundFX.pop();
+      vnIndex++;
+      if (vnIndex >= vnQueue.length) {
+        finishVNDialog();
+      } else {
+        renderVNCurrentSlide();
+      }
+    }
+
+    function skipVNDialog() {
+      SoundFX.pop();
+      finishVNDialog();
+    }
+
+    function finishVNDialog() {
+      document.getElementById('vn-dialog-overlay').classList.add('hidden');
+      const modals = ['modal-cashier', 'modal-market', 'modal-finance', 'modal-savings', 'modal-event', 'modal-eod', 'modal-guide', 'modal-characters', 'modal-initial-budget', 'modal-settings', 'modal-phone'];
+      isPausedByModal = modals.some(m => {
+        const el = document.getElementById(m);
+        return el && !el.classList.contains('hidden');
+      });
+      if (typeof vnOnComplete === 'function') {
+        const cb = vnOnComplete;
+        vnOnComplete = null;
+        cb();
+      }
+    }
+
+    function runDay1OmHeriTutorial() {
+      specialVisitor = {
+        name: 'Om Heri',
+        roleType: 'om_heri',
+        x: 560,
+        y: 300,
+        dir: 'left'
+      };
+      startVNDialog([
+        {
+          speaker: 'Om Heri',
+          charId: 'om_heri',
+          role: 'Mentor & Tetangga Senior',
+          text: 'Selamat pagi Bima! Wah, rapi sekali Warung Josjis pertamamu hasil tabungan Rp 30 Juta ini.'
+        },
+        {
+          speaker: 'Om Heri',
+          charId: 'om_heri',
+          role: 'Mentor & Tetangga Senior',
+          text: 'Langkah pertama: lihat panah kuning di atas kepalamu menuju tanda seru (!) di kaca depan. Balik papan TUTUP menjadi BUKA!'
+        },
+        {
+          speaker: 'Om Heri',
+          charId: 'om_heri',
+          role: 'Mentor & Tetangga Senior',
+          text: 'Setelah toko dibuka, berdiri di Meja Kasir. Pelanggan akan masuk memilih lebih dari 1 produk, lalu pilih nomor hijau untuk menyelesaikan pembayaran.'
+        }
+      ]);
+    }
+
+    function inviteBimWingPromo() {
+      if (gameState.bimWingUsedToday) {
+        showToast('Bim Wing sudah melakukan promosi hari ini. Coba lagi besok!', 'info');
+        return;
+      }
+      if (gameState.reputation < 3.0) {
+        showToast('Reputasi minimal 3.0⭐ untuk mengundang Bim Wing!', 'error');
+        return;
+      }
+      closeModal('modal-characters');
+      gameState.bimWingUsedToday = true;
+      gameState.bimWingPromoTimer = 75;
+      specialVisitor = {
+        name: 'Bim Wing',
+        roleType: 'bim_wing',
+        x: 390,
+        y: 345,
+        dir: 'up'
+      };
+      document.getElementById('promo-banner').classList.remove('hidden');
+      startVNDialog([
+        {
+          speaker: 'Bim Wing',
+          charId: 'bim_wing',
+          role: 'Influencer Terkenal',
+          text: 'Yo guys! Bim Wing lagi mampir ke Warung Josjis nih! Harganya jujur, barangnya lengkap, wajib mampir!'
+        },
+        {
+          speaker: 'Bima',
+          charId: 'bima',
+          role: 'Penjual Toko',
+          text: 'Terima kasih banyak Kak Bim Wing sudah bantu promosiin warung pertamaku!'
+        }
+      ], () => {
+        if (gameState.shopOpen) spawnCustomer();
+        saveGame();
+      });
+    }
+
+    /**
+     * =========================================================================
+     * 11. KONTROL MENU AWAL, ANGGARAN RP 30 JUTA, KUSTOM HUD & MODAL RENDER
+     * =========================================================================
+     */
+    let openedSettingsFromTitle = false;
+
+    function handleStartButtonClick() {
+      SoundFX.ensureBGM();
+      SoundFX.door();
+      document.getElementById('main-menu-screen').classList.add('hidden');
+
+      player.x = 480;
+      player.y = 425;
+      introCutscene.active = true;
+      introCutscene.progress = 0;
+      introCutscene.doorOpenAmount = 0;
+    }
+
+    function onIntroCutsceneFinished() {
+      if (!gameState.initialBudgetChecked) {
+        document.getElementById('budget-bima-avatar').innerHTML = getCharacterPortraitSVG('bima');
+        openModal('modal-initial-budget');
+      } else if (!gameState.tutorialDone && gameState.day === 1) {
+        gameState.tutorialDone = true;
+        saveGame();
+        runDay1OmHeriTutorial();
+      } else {
+        showToast('Selamat datang kembali di Warung Josjis!', 'success');
+      }
+    }
+
+    function confirmInitialBudgetSetup() {
+      gameState.initialBudgetChecked = true;
+      gameState.tutorialDone = true;
+      SoundFX.coin();
+      closeModal('modal-initial-budget');
+      updateAllUI();
+      saveGame();
+      runDay1OmHeriTutorial();
+    }
+
+    function handleExitGame() {
+      SoundFX.pop();
+      document.getElementById('main-menu-screen').classList.add('hidden');
+      document.getElementById('exit-game-screen').classList.remove('hidden');
+    }
+
+    function returnToMainMenu() {
+      SoundFX.pop();
+      document.getElementById('exit-game-screen').classList.add('hidden');
+      document.getElementById('main-menu-screen').classList.remove('hidden');
+    }
+
+    function openSettingsMenu(fromTitle = false) {
+      openedSettingsFromTitle = fromTitle;
+      const pct = SoundFX.getVolumePercent();
+      document.getElementById('settings-volume-slider').value = pct;
+      document.getElementById('settings-volume-label').textContent = pct + '%';
+      document.getElementById('modal-settings').classList.remove('hidden');
+      isPausedByModal = true;
+      SoundFX.pop();
+    }
+
+    function closeSettingsMenu() {
+      document.getElementById('modal-settings').classList.add('hidden');
+      if (!openedSettingsFromTitle) {
+        const modals = ['modal-cashier', 'modal-market', 'modal-finance', 'modal-savings', 'modal-event', 'modal-eod', 'modal-guide', 'modal-characters', 'modal-initial-budget', 'modal-settings', 'modal-phone'];
+        const vnEl = document.getElementById('vn-dialog-overlay');
+        const vnOpen = vnEl && !vnEl.classList.contains('hidden');
+        isPausedByModal = vnOpen || modals.some(m => {
+          const el = document.getElementById(m);
+          return el && !el.classList.contains('hidden');
+        });
+      }
+      SoundFX.pop();
+    }
+
+    function updateMasterVolume(val) {
+      SoundFX.setVolume(Number(val));
+      document.getElementById('settings-volume-label').textContent = val + '%';
+      const audioBtn = document.getElementById('btn-audio-toggle');
+      if (audioBtn) audioBtn.textContent = Number(val) === 0 ? '🔇' : '🔊';
+    }
+
+    function enterHudCustomizeMode() {
+      isHudCustomizeMode = true;
+      document.getElementById('modal-settings').classList.add('hidden');
+      document.getElementById('main-menu-screen').classList.add('hidden');
+      document.getElementById('hud-customize-bar').classList.remove('hidden');
+      ['hud-analog-wrapper', 'hud-interact-wrapper', 'hud-sprint-wrapper'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hud-edit-active');
+      });
+    }
+
+    function exitHudCustomizeMode() {
+      isHudCustomizeMode = false;
+      document.getElementById('hud-customize-bar').classList.add('hidden');
+      ['hud-analog-wrapper', 'hud-interact-wrapper', 'hud-sprint-wrapper'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('hud-edit-active');
+      });
+      saveCustomHudLayout();
+      if (openedSettingsFromTitle) {
+        document.getElementById('main-menu-screen').classList.remove('hidden');
+      }
+      openSettingsMenu(openedSettingsFromTitle);
+      showToast('Tata letak HUD berhasil disimpan!', 'success');
+    }
+
+    function saveCustomHudLayout() {
+      const layout = {};
+      ['hud-analog-wrapper', 'hud-interact-wrapper', 'hud-sprint-wrapper'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.style.left && el.style.top) {
+          layout[id] = { left: el.style.left, top: el.style.top };
+        }
+      });
+      try {
+        localStorage.setItem(HUD_LAYOUT_KEY, JSON.stringify(layout));
+      } catch (e) {}
+    }
+
+    function loadCustomHudLayout() {
+      try {
+        const raw = localStorage.getItem(HUD_LAYOUT_KEY);
+        if (!raw) return;
+        const layout = JSON.parse(raw);
+        Object.keys(layout).forEach(id => {
+          const el = document.getElementById(id);
+          if (el && layout[id]) {
+            el.style.left = layout[id].left;
+            el.style.top = layout[id].top;
+            el.style.right = 'auto';
+            el.style.bottom = 'auto';
+          }
+        });
+      } catch (e) {}
+    }
+
+    function resetCustomHudLayout() {
+      localStorage.removeItem(HUD_LAYOUT_KEY);
+      ['hud-analog-wrapper', 'hud-interact-wrapper', 'hud-sprint-wrapper'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.style.left = '';
+          el.style.top = '';
+          el.style.right = '';
+          el.style.bottom = '';
+        }
+      });
+      showToast('Posisi tombol HUD dikembalikan ke default.', 'info');
+    }
+
+    function setupHudControls() {
+      ['hud-analog-wrapper', 'hud-interact-wrapper', 'hud-sprint-wrapper'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        let dragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        el.addEventListener('pointerdown', (e) => {
+          if (!isHudCustomizeMode) return;
+          e.stopPropagation();
+          dragging = true;
+          const rect = el.getBoundingClientRect();
+          const parentRect = document.getElementById('game-container').getBoundingClientRect();
+          offsetX = e.clientX - rect.left;
+          offsetY = e.clientY - rect.top;
+          el.style.left = (rect.left - parentRect.left) + 'px';
+          el.style.top = (rect.top - parentRect.top) + 'px';
+          el.style.right = 'auto';
+          el.style.bottom = 'auto';
+          el.setPointerCapture(e.pointerId);
+        });
+
+        el.addEventListener('pointermove', (e) => {
+          if (!dragging || !isHudCustomizeMode) return;
+          const parentRect = document.getElementById('game-container').getBoundingClientRect();
+          const newLeft = Math.max(4, Math.min(parentRect.width - el.offsetWidth - 4, e.clientX - parentRect.left - offsetX));
+          const newTop = Math.max(4, Math.min(parentRect.height - el.offsetHeight - 4, e.clientY - parentRect.top - offsetY));
+          el.style.left = newLeft + 'px';
+          el.style.top = newTop + 'px';
+        });
+
+        el.addEventListener('pointerup', () => {
+          dragging = false;
+        });
+      });
+
+      const analogWrap = document.getElementById('hud-analog-wrapper');
+      const analogKnob = document.getElementById('hud-analog-knob');
+      if (analogWrap && analogKnob) {
+        const maxRadius = 34;
+        const updateAnalog = (clientX, clientY) => {
+          const rect = analogWrap.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          let dx = clientX - cx;
+          let dy = clientY - cy;
+          const dist = Math.hypot(dx, dy);
+          if (dist > maxRadius) {
+            dx = (dx / dist) * maxRadius;
+            dy = (dy / dist) * maxRadius;
+          }
+          analogKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+          analogInput.x = dx / maxRadius;
+          analogInput.y = dy / maxRadius;
+        };
+
+        analogWrap.addEventListener('pointerdown', (e) => {
+          if (isHudCustomizeMode) return;
+          SoundFX.ensureBGM();
+          analogInput.active = true;
+          analogWrap.setPointerCapture(e.pointerId);
+          updateAnalog(e.clientX, e.clientY);
+        });
+        analogWrap.addEventListener('pointermove', (e) => {
+          if (!analogInput.active || isHudCustomizeMode) return;
+          updateAnalog(e.clientX, e.clientY);
+        });
+        const resetAnalog = () => {
+          analogInput.active = false;
+          analogInput.x = 0;
+          analogInput.y = 0;
+          analogKnob.style.transform = 'translate(0px, 0px)';
+        };
+        analogWrap.addEventListener('pointerup', resetAnalog);
+        analogWrap.addEventListener('pointercancel', resetAnalog);
+      }
+
+      const sprintBtn = document.getElementById('hud-sprint-btn');
+      if (sprintBtn) {
+        sprintBtn.addEventListener('pointerdown', (e) => {
+          if (isHudCustomizeMode) return;
+          e.stopPropagation();
+          player.isSprinting = true;
+          sprintBtn.classList.add('ring-4', 'ring-yellow-300');
+        });
+        const stopSprint = () => {
+          player.isSprinting = false;
+          sprintBtn.classList.remove('ring-4', 'ring-yellow-300');
+        };
+        sprintBtn.addEventListener('pointerup', stopSprint);
+        sprintBtn.addEventListener('pointerleave', stopSprint);
+        sprintBtn.addEventListener('pointercancel', stopSprint);
+      }
+    }
+
+    function triggerNearestInteraction() {
+      if (isHudCustomizeMode) return;
+      SoundFX.ensureBGM();
+      const nearZone = ZONES.find(z => Math.hypot(player.x - z.x, player.y - z.y) <= z.r);
+      if (nearZone) {
+        nearZone.action();
+      } else {
+        showToast('Dekati objek bertanda ikon (Papan Buka/Tutup, Kasir, Rak, atau Ruang Restok) lalu tekan Interaksi.', 'info');
+      }
+    }
+
+    function openModal(id) {
+      const target = document.getElementById(id);
+      if (!target) return;
+      if (id === 'modal-market') renderMarketModal();
+      if (id === 'modal-finance') renderFinanceModal();
+      if (id === 'modal-savings') renderSavingsModal();
+      if (id === 'modal-characters') renderCharactersModal();
+      target.classList.remove('hidden');
+      isPausedByModal = true;
+      SoundFX.pop();
+    }
+
+    function closeModal(id) {
+      const target = document.getElementById(id);
+      if (target) target.classList.add('hidden');
+      const modals = ['modal-cashier', 'modal-market', 'modal-finance', 'modal-savings', 'modal-event', 'modal-eod', 'modal-guide', 'modal-characters', 'modal-initial-budget', 'modal-settings', 'modal-phone'];
+      const vnEl = document.getElementById('vn-dialog-overlay');
+      const vnOpen = vnEl && !vnEl.classList.contains('hidden');
+      isPausedByModal = vnOpen || modals.some(m => {
+        const el = document.getElementById(m);
+        return el && !el.classList.contains('hidden');
+      });
+    }
+
+    function renderMarketModal() {
+      document.getElementById('market-cash-display').textContent = formatRp(gameState.businessCash);
+      document.getElementById('market-capacity-text').textContent = `${getTotalStockCount()} / ${getMaxStockCapacity()} item`;
+      const grid = document.getElementById('market-products-grid');
+      grid.innerHTML = PRODUCTS_MASTER.map(p => {
+        const inv = gameState.inventory[p.id];
+        const qty = getProductTotalQty(p.id);
+        const sellPrice = getSellingPrice(p.id);
+        const profit = sellPrice - inv.todayWholesaleCost;
+        return `
+          <div class="bg-white border-2 border-amber-200 rounded-2xl p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">${p.icon}</span>
+                <div>
+                  <div class="font-rpg font-bold text-slate-800 text-sm">${p.name}</div>
+                  <div class="text-[11px] text-slate-500">Modal: ${formatRp(inv.todayWholesaleCost)} | Stok: <b>${qty}</b></div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="font-rpg font-bold text-emerald-700 text-sm">${formatRp(sellPrice)}</div>
+                <div class="text-[10px] font-bold text-indigo-600">Untung +${formatRp(profit)}</div>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5 pt-1">
+              ${Object.keys(MARGIN_PRESETS).map(k => `
+                <button onclick="setProductMargin('${p.id}', '${k}')" class="py-1.5 rounded-xl text-xs font-bold border-2 ${inv.marginKey === k ? 'bg-amber-400 border-amber-700 text-amber-950' : 'bg-slate-100 border-slate-200 text-slate-600'}">
+                  ${MARGIN_PRESETS[k].label}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setProductMargin(prodId, marginKey) {
+      gameState.inventory[prodId].marginKey = marginKey;
+      SoundFX.pop();
+      renderMarketModal();
+      saveGame();
+    }
+
+    function renderFinanceModal() {
+      const rev = gameState.todayStats.revenue;
+      const cogs = gameState.todayStats.cogs;
+      document.getElementById('fin-today-rev').textContent = formatRp(rev);
+      document.getElementById('fin-today-cogs').textContent = formatRp(cogs);
+      document.getElementById('fin-today-profit').textContent = formatRp(rev - cogs);
+      document.getElementById('fin-receivables').textContent = formatRp(gameState.receivables);
+
+      const logEl = document.getElementById('fin-log-list');
+      logEl.innerHTML = gameState.logs.map(l => `
+        <div class="px-3.5 py-2 flex items-center justify-between gap-2">
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 mr-1">[${l.time}]</span>
+            <span class="font-medium text-slate-700">${l.text}</span>
+          </div>
+          <span class="font-rpg font-bold whitespace-nowrap ${l.amount >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+            ${l.amount >= 0 ? '+' : ''}${formatRp(l.amount)}
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function renderSavingsModal() {
+      document.getElementById('sav-wallet-val').textContent = formatRp(gameState.walletCash);
+      document.getElementById('sav-edu-val').textContent = formatRp(gameState.eduSavings);
+      document.getElementById('sav-emerg-val').textContent = formatRp(gameState.emergencyFund);
+
+      const container = document.getElementById('upgrade-cards-container');
+      container.innerHTML = UPGRADES_MASTER.map(u => {
+        const owned = gameState.upgrades.includes(u.id);
+        return `
+          <div class="bg-white border-2 ${owned ? 'border-emerald-400 bg-emerald-50/40' : 'border-purple-200'} rounded-2xl p-3.5 flex flex-col justify-between gap-2">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="font-rpg font-bold text-slate-800 text-sm">${u.icon} ${u.name}</span>
+                <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">${u.effectText}</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-1">${u.desc}</p>
+            </div>
+            <button onclick="buyWarungUpgrade('${u.id}')" ${owned ? 'disabled' : ''} class="btn-rpg w-full ${owned ? 'bg-emerald-500 border-emerald-700 text-white' : 'bg-purple-600 border-purple-800 text-white'} font-rpg font-bold py-2 rounded-xl text-xs">
+              ${owned ? '✅ Sudah Dimiliki' : `Beli (${formatRp(u.cost)})`}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function transferWalletToEdu(amount) {
+      if (gameState.walletCash < amount) {
+        SoundFX.error();
+        showToast('Saldo Dompet Pribadi belum cukup!', 'error');
+        return;
+      }
+      gameState.walletCash -= amount;
+      gameState.eduSavings += amount;
+      SoundFX.coin();
+      renderSavingsModal();
+      updateAllUI();
+      saveGame();
+      showToast(`Berhasil menabung ${formatRp(amount)} ke Tabungan Pendidikan!`, 'success');
+    }
+
+    function transferWalletToEmerg(amount) {
+      if (gameState.walletCash < amount) {
+        SoundFX.error();
+        showToast('Saldo Dompet Pribadi belum cukup!', 'error');
+        return;
+      }
+      gameState.walletCash -= amount;
+      gameState.emergencyFund += amount;
+      SoundFX.coin();
+      renderSavingsModal();
+      updateAllUI();
+      saveGame();
+      showToast(`Berhasil menambah ${formatRp(amount)} ke Dana Darurat!`, 'success');
+    }
+
+    function buyPersonalSnack() {
+      if (gameState.walletCash < 5000) {
+        SoundFX.error();
+        showToast('Saldo Dompet Pribadi kurang dari Rp 5.000!', 'error');
+        return;
+      }
+      gameState.walletCash -= 5000;
+      gameState.energy = Math.min(100, gameState.energy + 35);
+      SoundFX.buy();
+      renderSavingsModal();
+      updateAllUI();
+      saveGame();
+      showToast('Segar! Energi Bima pulih +35%.', 'success');
+    }
+
+    function buyWarungUpgrade(upgId) {
+      const upg = UPGRADES_MASTER.find(u => u.id === upgId);
+      if (!upg || gameState.upgrades.includes(upgId)) return;
+      if (gameState.businessCash < upg.cost) {
+        SoundFX.error();
+        showToast('Kas Usaha belum cukup untuk ekspansi ini!', 'error');
+        return;
+      }
+      gameState.businessCash -= upg.cost;
+      gameState.upgrades.push(upgId);
+      if (upgId === 'minimarket_lvl') {
+        gameState.reputation = Math.min(5.0, +(gameState.reputation + 1.0).toFixed(2));
+      }
+      addLog(`Upgrade Fasilitas: ${upg.name}`, -upg.cost, 'out');
+      SoundFX.coin();
+      renderSavingsModal();
+      updateAllUI();
+      saveGame();
+      showToast(`Selamat! ${upg.name} berhasil dipasang di toko!`, 'success');
+    }
+
+    function renderCharactersModal() {
+      const body = document.getElementById('characters-list-body');
+      body.innerHTML = Object.values(CHARACTERS_INFO).map(c => `
+        <div class="bg-white border-2 border-amber-200 rounded-2xl p-3 flex items-center gap-3">
+          <div class="w-16 h-16 rounded-2xl border-2 border-amber-500 overflow-hidden shrink-0">
+            ${getCharacterPortraitSVG(c.id)}
+          </div>
+          <div class="flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-rpg font-bold text-slate-900 text-base">${c.name}</span>
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${c.badgeColor}">${c.role}</span>
+            </div>
+            <p class="text-xs text-slate-600 mt-1">${c.desc}</p>
+            ${c.id === 'bim_wing' ? `
+              <button onclick="inviteBimWingPromo()" class="btn-rpg mt-2 bg-pink-600 border-pink-800 text-white font-rpg font-bold px-3 py-1.5 rounded-xl text-xs">
+                🎥 Undang Live Promo Gratis
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function showEventModal({ icon, title, desc, hint, choices }) {
+      document.getElementById('event-modal-icon').textContent = icon;
+      document.getElementById('event-modal-title').textContent = title;
+      document.getElementById('event-modal-desc').textContent = desc;
+      document.getElementById('event-modal-hint').textContent = hint;
+      const choicesEl = document.getElementById('event-modal-choices');
+      choicesEl.innerHTML = '';
+      choices.forEach(ch => {
+        const btn = document.createElement('button');
+        btn.className = `btn-rpg w-full font-rpg font-bold py-2.5 px-4 rounded-2xl text-sm ${ch.style}`;
+        btn.textContent = ch.label;
+        btn.onclick = () => {
+          closeModal('modal-event');
+          ch.action();
+        };
+        choicesEl.appendChild(btn);
+      });
+      openModal('modal-event');
+    }
+
+    function triggerRandomDailyEvent() {
+      showEventModal({
+        icon: '💼',
+        title: 'Kunjungan Ahmad (Mantan Bos)',
+        desc: 'Ahmad mampir dan menawarkan pinjaman berbunga tinggi 25% per hari untuk modal cepat, atau menantang Bima membuktikan profit bersih tanpa utang.',
+        hint: 'Hati-hati terhadap utang berbunga tinggi yang dapat menggerus laba usaha!',
+        choices: [
+          {
+            label: 'Tolak Utang & Andalkan Pembukuan Sehat (+0.3⭐)',
+            style: 'bg-emerald-500 border-emerald-700 text-white',
+            action: () => {
+              gameState.reputation = Math.min(5.0, +(gameState.reputation + 0.3).toFixed(2));
+              updateAllUI();
+              saveGame();
+              showToast('Prinsip keuangan Bima mendapat respek warga!', 'success');
+            }
+          },
+          {
+            label: 'Ambil Pinjaman Cepat Rp 200.000 (Bunga Tinggi)',
+            style: 'bg-amber-400 border-amber-600 text-amber-950',
+            action: () => {
+              gameState.businessCash += 200000;
+              gameState.receivables -= 250000;
+              addLog('Pinjaman berbunga dari Ahmad', 200000, 'in');
+              updateAllUI();
+              saveGame();
+            }
+          }
+        ]
+      });
+    }
+
+    function confirmCloseShopEarly() {
+      openEndOfDayReport();
+    }
+
+    function openEndOfDayReport() {
+      const rev = gameState.todayStats.revenue;
+      const cogs = gameState.todayStats.cogs;
+      const opex = 5000;
+      const net = rev - cogs - opex;
+      document.getElementById('eod-title').textContent = `Laporan Tutup Warung - Hari ke-${gameState.day}`;
+      document.getElementById('eod-rev').textContent = formatRp(rev);
+      document.getElementById('eod-cogs').textContent = `- ${formatRp(cogs)}`;
+      document.getElementById('eod-opex').textContent = `- ${formatRp(opex)}`;
+      document.getElementById('eod-net-profit').textContent = formatRp(net);
+      document.getElementById('eod-tip-text').textContent = FINANCIAL_TIPS[(gameState.day - 1) % FINANCIAL_TIPS.length];
+      openModal('modal-eod');
+    }
+
+    function startNextDay() {
+      const rev = gameState.todayStats.revenue;
+      const cogs = gameState.todayStats.cogs;
+      const opex = 5000;
+      const net = rev - cogs - opex;
+
+      gameState.businessCash = Math.max(0, gameState.businessCash - opex);
+      if (net > 0) {
+        const selected = document.querySelector('input[name="profit-alloc"]:checked')?.value || 'balanced';
+        const ratios = selected === 'growth' ? [0.85, 0.10, 0.05] : selected === 'saver' ? [0.40, 0.45, 0.15] : [0.60, 0.25, 0.15];
+        const toSav = Math.round(net * ratios[1]);
+        const toWal = Math.round(net * ratios[2]);
+        gameState.businessCash -= (toSav + toWal);
+        gameState.eduSavings += toSav;
+        gameState.walletCash += toWal;
+      }
+
+      if (gameState.eduSavings > 0) {
+        gameState.eduSavings += Math.round(gameState.eduSavings * 0.02);
+      }
+
+      gameState.day += 1;
+      gameState.timeMinutes = 7 * 60;
+      gameState.energy = 100;
+      gameState.eventTriggeredToday = false;
+      gameState.bimWingUsedToday = false;
+      gameState.todayStats = { revenue: 0, cogs: 0, customersServed: 0, expiredLoss: 0 };
+      customers = [];
+      activeCustomer = null;
+
+      rollDailyWeather();
+      generateDailyWholesalePrices();
+      closeModal('modal-eod');
+      updateCashierBadge();
+      updateAllUI();
+      saveGame();
+      showToast(`☀️ Selamat pagi Hari ke-${gameState.day}!`, 'success');
+    }
+
+    function toggleAudio() {
+      const isOn = SoundFX.toggle();
+      document.getElementById('btn-audio-toggle').textContent = isOn ? '🔊' : '🔇';
+    }
+
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const colors = {
+        success: 'bg-emerald-600 border-emerald-300 text-white',
+        error: 'bg-rose-600 border-rose-300 text-white',
+        info: 'bg-slate-900/90 border-amber-400 text-amber-100'
+      };
+      const el = document.createElement('div');
+      el.className = `animate-modal pointer-events-auto border-2 rounded-2xl px-3.5 py-2 text-xs font-bold shadow-xl ${colors[type] || colors.info}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.remove();
+      }, 3400);
+    }
+
+    function updateHUDClock() {
+      const h = Math.floor(gameState.timeMinutes / 60).toString().padStart(2, '0');
+      const m = Math.floor(gameState.timeMinutes % 60).toString().padStart(2, '0');
+      document.getElementById('hud-clock').textContent = `${h}:${m}`;
+    }
+
+    function updateAllUI() {
+      document.getElementById('hud-day').textContent = `Hari ke-${gameState.day}`;
+      document.getElementById('hud-day-name').textContent = `(${DAYS_OF_WEEK[(gameState.day - 1) % 7]})`;
+      document.getElementById('hud-level-badge').textContent = `Warung Josjis ${getWarungLevelInfo().title.split(' ')[0]}`;
+      document.getElementById('hud-business-cash').textContent = formatRp(gameState.businessCash);
+      document.getElementById('hud-savings-cash').textContent = formatRp(gameState.eduSavings + gameState.walletCash);
+      document.getElementById('hud-reputation').textContent = gameState.reputation.toFixed(1);
+      document.getElementById('hud-energy-text').textContent = `${gameState.energy}%`;
+      document.getElementById('hud-energy-bar').style.width = `${gameState.energy}%`;
+
+      const weatherIcons = { sunny: '☀️', cloudy: '⛅', rainy: '🌧️' };
+      document.getElementById('hud-weather-icon').textContent = weatherIcons[gameState.weather] || '☀️';
+      updateHUDClock();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    window.onload = function () {
+      loadGame();
+      resizeCanvas();
+      setupHudControls();
+      loadCustomHudLayout();
+      updateAllUI();
+      requestAnimationFrame(gameLoop);
+    };
+  </script>
+</body>
+</html>
+```
+
+I have repaired the broken function blocks in `juragan_warung_cilik.html` (`getSellingPrice`, `drawCitampiTree`, `drawChibi25DCharacter`, `render25DWorld`, `spawnCustomer`, `saveGame`/`loadGame`, and `getWarungLevelInfo`) so the 2.5D renderer and game loop run cleanly without any syntax or reference errors.
